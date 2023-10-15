@@ -1,4 +1,7 @@
 "use client"
+import { useState } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from 'next/navigation'
 import * as React from 'react';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
@@ -13,6 +16,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { toast } from "react-hot-toast";
 import logo from '@/image/logo.png';
 import Image from 'next/image';
 
@@ -32,7 +36,34 @@ function Copyright(props: any) {
 // TODO remove, this demo shouldn't need to reset the theme.
 const defaultTheme = createTheme();
 
-export default function login() {
+const LoginPage = () => {
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const { data: session } = useSession();
+    console.log({ session });
+    console.log("token:", session?.user?.token)
+    const router = useRouter()
+
+    const handleLogin = async () => {
+        const result = await signIn("credentials", {
+            username,
+            password,
+            redirect: false, // Để không tự động chuyển hướng
+        });
+
+        if (result?.error) {
+            if (result.error === "CredentialsSignin") {
+                toast.error("Sai tên đăng nhập hoặc mật khẩu")
+            } else {
+                console.error("Lỗi đăng nhập:", result.error);
+            }
+        } else {
+            toast.success("Đăng nhập thành công")
+            router.push("/");
+        }
+    };
+
+
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
@@ -73,6 +104,8 @@ export default function login() {
                             name="email"
                             autoComplete="email"
                             autoFocus
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
                         />
                         <TextField
                             margin="normal"
@@ -83,6 +116,8 @@ export default function login() {
                             type="password"
                             id="password"
                             autoComplete="current-password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                         />
                         <FormControlLabel
                             control={<Checkbox value="remember" color="primary" />}
@@ -93,6 +128,7 @@ export default function login() {
                             fullWidth
                             variant="contained"
                             sx={{ mt: 3, mb: 2 }}
+                            onClick={handleLogin}
                         >
                             Sign In
                         </Button>
@@ -102,11 +138,11 @@ export default function login() {
                                     Forgot password?
                                 </Link>
                             </Grid>
-                            {/* <Grid item>
+                            <Grid item>
                                 <Link href="#" variant="body2">
                                     {"Don't have an account? Sign Up"}
                                 </Link>
-                            </Grid> */}
+                            </Grid>
                         </Grid>
                     </Box>
                 </Box>
@@ -115,3 +151,4 @@ export default function login() {
         </ThemeProvider>
     );
 }
+export default LoginPage;

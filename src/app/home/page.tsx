@@ -5,5 +5,4 @@ const page = () => {
         <div>Home page</div>
     )
 }
-
 export default page
