@@ -1,12 +1,10 @@
-import Image from 'next/image'
-import styles from './page.module.css'
 import React from 'react'
+import BaseLayout from './components/BaseLayout'
 
 export default function Home() {
   return (
-    <>
-      Welcome to Mea system
-    </>
-
+    <BaseLayout>
+      <h1>hello</h1>
+    </BaseLayout>
   )
 }

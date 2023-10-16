@@ -39,9 +39,9 @@ const defaultTheme = createTheme();
 const LoginPage = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    const { data: session } = useSession();
-    console.log({ session });
-    console.log("token:", session?.user?.token)
+    // const { data: session } = useSession();
+    // console.log({ session });
+    // console.log("token:", session?.user?.token)
     const router = useRouter()
 
     const handleLogin = async () => {

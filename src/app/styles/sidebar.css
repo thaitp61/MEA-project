@@ -1,0 +1,170 @@
+.layout {
+  display: flex;
+  height: 100vh;
+  position: relative;
+  gap: 2rem;
+}
+
+.layout__main-content {
+  background-color: #f3f4f6;
+  flex-grow: 1;
+  padding-top: 2rem;
+  overflow: auto;
+}
+
+.sidebar__wrapper {
+  background-color: var(--color-bg);
+  height: 100%; /* Đảm bảo chiều cao bằng với sidebar */
+  position: relative;
+}
+
+.sidebar {
+  width: 16rem;
+  background-color: var(--color-bg);
+  padding: 1rem;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+  overflow: hidden;
+  overflow-y: auto; /* Cho phép cuộn dọc khi nội dung vượt quá kích thước của sidebar__content */
+  max-height: calc(100% - 1rem);
+}
+
+h6 {
+  color: #14a876;
+}
+
+.sidebar__top {
+  display: flex;
+  align-items: center;
+  font-size: small;
+  gap: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sidebar__list--visible {
+  display: flex;
+}
+
+.sidebar__list--visible li {
+  height: fit-content;
+  margin: 0.4rem;
+}
+
+.sidebar__logo {
+  width: 3rem;
+  height: 3rem;
+  object-fit: contain;
+  border-radius: 1rem;
+}
+
+.sidebar__logo-name {
+  font-size: 1.2rem;
+}
+
+.sidebar__list {
+  list-style: none;
+}
+
+.sidebar__link--active {
+  display: inline-block;
+  font-size: 0.8rem;
+  text-decoration: none;
+  color: #000;
+  padding: 0.8rem 0.9rem;
+  display: flex;
+  margin-bottom: 1rem;
+  border-radius: 0.8rem;
+  height: 100%;
+}
+
+.sidebar__link {
+  color: #000;
+  background-color: var(--color-sidebar-item);
+}
+
+.sidebar__link:hover {
+  color: rgb(0, 167, 111);
+  background-color: #DCDCDC;
+  transition-duration: 0.5s;
+}
+
+.sidebar__link--selected {
+  color: rgb(0, 167, 111);
+  background-color: rgba(0, 167, 111, 0.08);
+}
+
+.sidebar__icon {
+  display: inline-block;
+  font-size: 1rem;
+}
+
+.sidebar__name {
+  margin-left: 0.5rem;
+}
+
+[data-collapse="true"] {
+  width: 5.3rem;
+}
+
+[data-collapse="true"] .sidebar__name,
+[data-collapse="true"] .sidebar__logo-name {
+  display: none;
+}
+
+.sidebar--collapsed {
+  width: 5.3rem;
+}
+
+.sidebar--collapsed .sidebar__name,
+.sidebar--collapsed .sidebar__logo-name {
+  display: none;
+}
+
+.sidebar__content {
+  overflow-y: unset;
+  max-height: calc(100%);
+}
+
+
+.sidebar__information li {
+  display: flex;
+}
+
+.btn {
+  position: sticky;
+  left: 20rem;
+  top: 0;
+  border: none;
+  background-color: rgba(0, 167, 111, 0.08);
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid var(--color-border);
+  border-radius: 30%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  z-index: 1;
+  background-color: #f3f4f66a;
+  transition-duration: 0.3s;
+}
+
+.btn:hover {
+  background-color: rgba(0, 167, 111, 0.08);
+  color: rgb(0, 167, 111);
+}
+
+/*filter and search Danh Sách Thiết Bị Y Tế*/
+.filter-table {
+  display: flex;
+}
+
+
+body {
+  background-color: #f3f4f6;
+  font-family: "Roboto", sans-serif;
+}
+
