@@ -8,70 +8,17 @@ import axios from 'axios'
 import useSWR from "swr";
 import React, { useState, useEffect } from 'react';
 import { FilterComparator, SortOrder } from '../models/common';
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/DeleteOutlined";
+import CheckIcon from '@mui/icons-material/Check';
+import ClearIcon from '@mui/icons-material/Clear';
+import { toast } from 'react-hot-toast';
 
-const columns: GridColDef[] = [
-    { field: 'code', headerName: 'ID', width: 150 },
-    {
-        field: 'startImportDate',
-        headerName: 'Ngày bắt đầu',
-        width: 150,
-        editable: true,
-    },
-    {
-        field: 'endImportDate',
-        headerName: 'Ngày kết thúc',
-        width: 150,
-        editable: true,
-    },
-    {
-        field: 'name',
-        headerName: 'Tên',
-        type: "string",
-        width: 150,
-        valueGetter: (params) => params.row.createdBy.name
-    },
 
-    {
-        field: "actions",
-        type: "actions",
-        headerName: "Actions",
-        width: 150,
-        cellClassName: "actions",
-        renderCell: (params) => (
-            <div>
-                <GridActionsCellItem
-                    icon={<EditIcon />}
-                    label="Edit"
-                    className="textPrimary"
-                    color="inherit"
-                />
-                <GridActionsCellItem
-                    icon={<DeleteIcon />}
-                    label="Delete"
-                    color="inherit"
-                />
-            </div>
-        ),
-    }
-];
 
-const rows = [
-    { id: 1, lastName: 'Snow', firstName: 'Jon', age: 35 },
-    { id: 2, lastName: 'Lannister', firstName: 'Cersei', age: 42 },
-    { id: 3, lastName: 'Lannister', firstName: 'Jaime', age: 45 },
-    { id: 4, lastName: 'Stark', firstName: 'Arya', age: 16 },
-    { id: 5, lastName: 'Targaryen', firstName: 'Daenerys', age: null },
-    { id: 6, lastName: 'Melisandre', firstName: null, age: 150 },
-    { id: 7, lastName: 'Clifford', firstName: 'Ferrara', age: 44 },
-    { id: 8, lastName: 'Frances', firstName: 'Rossini', age: 36 },
-    { id: 9, lastName: 'Roxie', firstName: 'Harvey', age: 65 },
-];
+const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjI4NWI2OWRiLWE2NmYtNDFiOC1hYTMxLTM5NDRkNWI5MTYxOCIsInR5cGUiOiJBVVRIIiwiZXhwaXJlZEF0IjoxNzAwMTA3Mjg2MjIyLCJpYXQiOjE2OTc1MTUyODZ9.bUR6ovOjT3ukc8fcV-qRUZkp-MXNEvNutdIVjFhH1co"
 
 
 export default function DataGridDemo() {
-    const fetcher = (url: string) => axios.get(url).then(res => res.data);
+    // const fetcher = (url: string) => axios.get(url).then(res => res.data);
 
     // const { data, error, isLoading } = useSWR(
     //     ["https://mea.monoinfinity.net/api/v1/import-plan",
@@ -101,12 +48,12 @@ export default function DataGridDemo() {
             const response = await axios.get('https://mea.monoinfinity.net/api/v1/import-plan',
                 {
                     headers: {
-                        Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjQwNzdkN2ZlLTI4MGUtZWRiYi1kYzVkLWJjNTY0ZmQ1ZTQ2YyIsInR5cGUiOiJBVVRIIiwiZXhwaXJlZEF0IjoxNzAwMDY2MzU2ODA3LCJpYXQiOjE2OTc0NzQzNTZ9.7yjyNqwWNEgvyw-wnu4mUaQHfp5NsNIEEbM6tv4C73k',
+                        Authorization: `Bearer ${token}`,
                     },
                     params: {
                         page: 0,
                         pageSize: 12,
-                        filters: [`status||${FilterComparator.EQUAL}||DRAFT`],
+                        filters: [`status||${FilterComparator.EQUAL}||SUBMITTED`],
                         orderBy: [],
                     },
                 });
@@ -119,6 +66,51 @@ export default function DataGridDemo() {
     useEffect(() => {
         getPlan();
     }, []);
+    const planID = "1";
+    const ApprovePlan = async (planID: string) => {
+        try {
+            const response = await axios.put(`https://mea.monoinfinity.net/api/v1/import-plan/${planID}/approve`, null, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
+
+            if (response.status === 200) {
+                toast.success("Cập nhật thành công");
+                getPlan(); // Gọi lại hàm getPlan() để tải lại dữ liệu
+            }
+        } catch (error) {
+            toast.error("Cập nhật thất bại");
+            console.error('API Error:', error);
+        }
+    }
+    const handleApprovePlan = (planID: string) => {
+        ApprovePlan(planID);
+        console.log("Approve PlanID:", planID)
+    }
+    const RejectPlan = async (planID: string) => {
+        try {
+            const response = await axios.put(`https://mea.monoinfinity.net/api/v1/import-plan/${planID}/cancel`, null, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
+
+            if (response.status === 200) {
+                toast.success("Cập nhật thành công");
+                getPlan(); // Gọi lại hàm getPlan() để tải lại dữ liệu
+            }
+        } catch (error) {
+            console.error('API Error:', error);
+            toast.success("Cập nhật thất bại");
+        }
+    }
+    const handleRejectPlan = (planID: string) => {
+        RejectPlan(planID);
+        console.log("reject PlanID:", planID)
+    }
+
+
 
     console.log("data:", plans)
 
@@ -137,6 +129,78 @@ export default function DataGridDemo() {
     // if (isLoading) {
     //     return <div>Loading....</div>
     // }
+    const columns: GridColDef[] = [
+        { field: 'id', headerName: 'ID', width: 150 },
+        { field: 'code', headerName: 'Số hoá đơn', width: 150 },
+        {
+            field: 'documentNumber',
+            headerName: 'Số chứng từ',
+            width: 150,
+            editable: true,
+        },
+        {
+            field: 'contractSymbol',
+            headerName: 'Ký hiệu hoá đơn',
+            width: 150,
+            editable: true,
+        },
+        {
+            field: 'startImportDate',
+            headerName: 'Ngày bắt đầu',
+            width: 150,
+            editable: true,
+        },
+        {
+            field: 'startImportDate',
+            headerName: 'Ngày bắt đầu',
+            width: 150,
+            editable: true,
+        },
+        {
+            field: 'startImportDate',
+            headerName: 'Ngày bắt đầu',
+            width: 150,
+            editable: true,
+        },
+        {
+            field: 'endImportDate',
+            headerName: 'Ngày kết thúc',
+            width: 150,
+            editable: true,
+        },
+        {
+            field: 'name',
+            headerName: 'Người tạo',
+            type: "string",
+            width: 150,
+            valueGetter: (params) => params.row.createdBy.name
+        },
+
+        {
+            field: "actions",
+            type: "actions",
+            headerName: "Actions",
+            width: 150,
+            cellClassName: "actions",
+            renderCell: (params) => (
+                <div>
+                    <GridActionsCellItem
+                        icon={<CheckIcon />}
+                        label="Accept"
+                        className="textPrimary"
+                        color="inherit"
+                        onClick={() => handleApprovePlan(params.row?.id)}
+                    />
+                    <GridActionsCellItem
+                        icon={<ClearIcon />}
+                        label="Reject"
+                        color="inherit"
+                        onClick={() => handleRejectPlan(params.row?.id)}
+                    />
+                </div>
+            ),
+        }
+    ];
     return (
         <BaseLayout>
             <Container>
