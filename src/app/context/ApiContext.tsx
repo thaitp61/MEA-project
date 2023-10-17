@@ -7,16 +7,16 @@ const ApiContext = axios.create({
 });
 
 
-const GetToken = () => {
-    const { data: session } = useSession();
-    console.log(session?.user?.token)
-    return session?.user?.token;
+const getToken = () => {
+    return localStorage.getItem('access_token');
 };
 
 // Thiết lập interceptor để tự động thêm token vào header
 ApiContext.interceptors.request.use(
     (config) => {
-        const token = GetToken();
+        // const token = getToken(eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjQwNzdkN2ZlLTI4MGUtZWRiYi1kYzVkLWJjNTY0ZmQ1ZTQ2YyIsInR5cGUiOiJBVVRIIiwiZXhwaXJlZEF0IjoxNzAwMTIyODIwNzYxLCJpYXQiOjE2OTc1MzA4MjB9.lWlaKsOF4_Ks9GKKaGuTZ6pDBAWHz7ryyULngBxDev8);
+        const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjQwNzdkN2ZlLTI4MGUtZWRiYi1kYzVkLWJjNTY0ZmQ1ZTQ2YyIsInR5cGUiOiJBVVRIIiwiZXhwaXJlZEF0IjoxNzAwMTIyODIwNzYxLCJpYXQiOjE2OTc1MzA4MjB9.lWlaKsOF4_Ks9GKKaGuTZ6pDBAWHz7ryyULngBxDev8';
+
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }

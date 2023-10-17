@@ -11,13 +11,85 @@ import { FilterComparator, SortOrder } from '../models/common';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
 import { toast } from 'react-hot-toast';
-
+import ApiContext from '../context/ApiContext';
 
 
 const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjI4NWI2OWRiLWE2NmYtNDFiOC1hYTMxLTM5NDRkNWI5MTYxOCIsInR5cGUiOiJBVVRIIiwiZXhwaXJlZEF0IjoxNzAwMTA3Mjg2MjIyLCJpYXQiOjE2OTc1MTUyODZ9.bUR6ovOjT3ukc8fcV-qRUZkp-MXNEvNutdIVjFhH1co"
 
 
 export default function DataGridDemo() {
+    const columns: GridColDef[] = [
+        { field: 'id', headerName: 'ID', width: 150 },
+        { field: 'code', headerName: 'Số hoá đơn', width: 150 },
+        {
+            field: 'documentNumber',
+            headerName: 'Số chứng từ',
+            width: 150,
+            editable: true,
+        },
+        {
+            field: 'contractSymbol',
+            headerName: 'Ký hiệu hoá đơn',
+            width: 150,
+            editable: true,
+        },
+        {
+            field: 'startImportDate',
+            headerName: 'Ngày bắt đầu',
+            width: 150,
+            editable: true,
+        },
+        {
+            field: 'startImportDate',
+            headerName: 'Ngày bắt đầu',
+            width: 150,
+            editable: true,
+        },
+        {
+            field: 'startImportDate',
+            headerName: 'Ngày bắt đầu',
+            width: 150,
+            editable: true,
+        },
+        {
+            field: 'endImportDate',
+            headerName: 'Ngày kết thúc',
+            width: 150,
+            editable: true,
+        },
+        {
+            field: 'name',
+            headerName: 'Người tạo',
+            type: "string",
+            width: 150,
+            valueGetter: (params) => params.row.createdBy.name
+        },
+
+        {
+            field: "actions",
+            type: "actions",
+            headerName: "Actions",
+            width: 150,
+            cellClassName: "actions",
+            renderCell: (params) => (
+                <div>
+                    <GridActionsCellItem
+                        icon={<CheckIcon />}
+                        label="Accept"
+                        className="textPrimary"
+                        color="inherit"
+                        onClick={() => handleApprovePlan(params.row?.id)}
+                    />
+                    <GridActionsCellItem
+                        icon={<ClearIcon />}
+                        label="Reject"
+                        color="inherit"
+                        onClick={() => handleRejectPlan(params.row?.id)}
+                    />
+                </div>
+            ),
+        }
+    ];
     // const fetcher = (url: string) => axios.get(url).then(res => res.data);
 
     // const { data, error, isLoading } = useSWR(
@@ -45,7 +117,7 @@ export default function DataGridDemo() {
 
     const getPlan = async () => {
         try {
-            const response = await axios.get('https://mea.monoinfinity.net/api/v1/import-plan',
+            const response = await ApiContext.get('/import-plan',
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -129,78 +201,7 @@ export default function DataGridDemo() {
     // if (isLoading) {
     //     return <div>Loading....</div>
     // }
-    const columns: GridColDef[] = [
-        { field: 'id', headerName: 'ID', width: 150 },
-        { field: 'code', headerName: 'Số hoá đơn', width: 150 },
-        {
-            field: 'documentNumber',
-            headerName: 'Số chứng từ',
-            width: 150,
-            editable: true,
-        },
-        {
-            field: 'contractSymbol',
-            headerName: 'Ký hiệu hoá đơn',
-            width: 150,
-            editable: true,
-        },
-        {
-            field: 'startImportDate',
-            headerName: 'Ngày bắt đầu',
-            width: 150,
-            editable: true,
-        },
-        {
-            field: 'startImportDate',
-            headerName: 'Ngày bắt đầu',
-            width: 150,
-            editable: true,
-        },
-        {
-            field: 'startImportDate',
-            headerName: 'Ngày bắt đầu',
-            width: 150,
-            editable: true,
-        },
-        {
-            field: 'endImportDate',
-            headerName: 'Ngày kết thúc',
-            width: 150,
-            editable: true,
-        },
-        {
-            field: 'name',
-            headerName: 'Người tạo',
-            type: "string",
-            width: 150,
-            valueGetter: (params) => params.row.createdBy.name
-        },
 
-        {
-            field: "actions",
-            type: "actions",
-            headerName: "Actions",
-            width: 150,
-            cellClassName: "actions",
-            renderCell: (params) => (
-                <div>
-                    <GridActionsCellItem
-                        icon={<CheckIcon />}
-                        label="Accept"
-                        className="textPrimary"
-                        color="inherit"
-                        onClick={() => handleApprovePlan(params.row?.id)}
-                    />
-                    <GridActionsCellItem
-                        icon={<ClearIcon />}
-                        label="Reject"
-                        color="inherit"
-                        onClick={() => handleRejectPlan(params.row?.id)}
-                    />
-                </div>
-            ),
-        }
-    ];
     return (
         <BaseLayout>
             <Container>

@@ -39,11 +39,11 @@ const defaultTheme = createTheme();
 const LoginPage = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    // const { data: session } = useSession();
-    // console.log({ session });
-    // console.log("token:", session?.user?.token)
+    const { data: session } = useSession();
+    console.log({ session });
+    console.log("token:", session?.user?.token)
     const router = useRouter()
-
+    const token = session?.user?.token as string
     const handleLogin = async () => {
         const result = await signIn("credentials", {
             username,
@@ -59,9 +59,11 @@ const LoginPage = () => {
             }
         } else {
             toast.success("Đăng nhập thành công")
+            localStorage.setItem("access_token", token)
             router.push("/");
         }
     };
+
 
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {

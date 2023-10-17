@@ -18,7 +18,7 @@ import { CiMedicalClipboard } from "react-icons/ci";
 import { GrUserManager } from "react-icons/gr";
 import { LiaHistorySolid } from "react-icons/lia";
 import Link from "next/link";
-
+import ApiContext from "../context/ApiContext";
 import { Avatar, Button } from "@mui/material";
 import { useRouter } from "next/navigation";
 
@@ -129,6 +129,26 @@ const Sidebar: React.FC = () => {
     const handleSidebarItemClick = (href: string) => {
         setActiveSidebarItem(href);
     };
+    const handleLogout = async () => {
+        const token = localStorage.getItem("access_token");
+        if (token) {
+            try {
+                await ApiContext.post('/user-me/logout',
+                );
+                localStorage.removeItem("access_token");
+                router.replace("/login");
+            } catch (error: any) {
+                console.log("Lỗi khi đăng xuất:", error);
+                if (error.response.status === 401) {
+                    router.replace("/login");
+                    localStorage.removeItem("access_token");
+                } else if (error.response.status === 403) {
+                    router.replace("/login");
+                    localStorage.removeItem("access_token");
+                }
+            }
+        }
+    }
 
 
     return (
@@ -147,8 +167,8 @@ const Sidebar: React.FC = () => {
                         alt="logo"
                     />
                     <div className="sidebar__logo-name">
-                        <h4>name:</h4>
-                        <h6>Vai trò: </h6>
+                        <h4>Trần Phương Thái</h4>
+                        <h6>Vai trò: Admin</h6>
                     </div>
                 </div>
                 <div className="sidebar__content">
@@ -162,6 +182,7 @@ const Sidebar: React.FC = () => {
                                     {href === "/logout" ? (
                                         <a
                                             className={`sidebar__link sidebar__link--active ${activeSidebarItem === href ? "sidebar__link--selected" : ""}`}
+                                            onClick={() => handleLogout()}
                                         >
                                             <span className="sidebar__icon">
                                                 <Icon />
