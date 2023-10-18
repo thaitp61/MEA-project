@@ -10,16 +10,13 @@ import React, { useState, useEffect } from 'react';
 import { FilterComparator, SortOrder } from '../models/common';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
+import ViewDetailIcon from '@mui/icons-material/Visibility';
 import { toast } from 'react-hot-toast';
 import ApiContext from '../context/ApiContext';
 
 
-const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjI4NWI2OWRiLWE2NmYtNDFiOC1hYTMxLTM5NDRkNWI5MTYxOCIsInR5cGUiOiJBVVRIIiwiZXhwaXJlZEF0IjoxNzAwMTA3Mjg2MjIyLCJpYXQiOjE2OTc1MTUyODZ9.bUR6ovOjT3ukc8fcV-qRUZkp-MXNEvNutdIVjFhH1co"
-
-
 export default function DataGridDemo() {
     const columns: GridColDef[] = [
-        { field: 'id', headerName: 'ID', width: 150 },
         { field: 'code', headerName: 'Số hoá đơn', width: 150 },
         {
             field: 'documentNumber',
@@ -30,18 +27,6 @@ export default function DataGridDemo() {
         {
             field: 'contractSymbol',
             headerName: 'Ký hiệu hoá đơn',
-            width: 150,
-            editable: true,
-        },
-        {
-            field: 'startImportDate',
-            headerName: 'Ngày bắt đầu',
-            width: 150,
-            editable: true,
-        },
-        {
-            field: 'startImportDate',
-            headerName: 'Ngày bắt đầu',
             width: 150,
             editable: true,
         },
@@ -68,11 +53,18 @@ export default function DataGridDemo() {
         {
             field: "actions",
             type: "actions",
-            headerName: "Actions",
+            headerName: "Chức năng",
             width: 150,
             cellClassName: "actions",
             renderCell: (params) => (
                 <div>
+                    <GridActionsCellItem
+                        icon={<ViewDetailIcon />}
+                        label="View"
+                        className="textPrimary"
+                        color="inherit"
+                    // onClick={() => handleApprovePlan(params.row?.id)}
+                    />
                     <GridActionsCellItem
                         icon={<CheckIcon />}
                         label="Accept"
@@ -119,9 +111,6 @@ export default function DataGridDemo() {
         try {
             const response = await ApiContext.get('/import-plan',
                 {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
                     params: {
                         page: 0,
                         pageSize: 12,
@@ -141,10 +130,8 @@ export default function DataGridDemo() {
     const planID = "1";
     const ApprovePlan = async (planID: string) => {
         try {
-            const response = await axios.put(`https://mea.monoinfinity.net/api/v1/import-plan/${planID}/approve`, null, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
+            const response = await ApiContext.put(`https://mea.monoinfinity.net/api/v1/import-plan/${planID}/approve`, null, {
+
             });
 
             if (response.status === 200) {
@@ -162,12 +149,7 @@ export default function DataGridDemo() {
     }
     const RejectPlan = async (planID: string) => {
         try {
-            const response = await axios.put(`https://mea.monoinfinity.net/api/v1/import-plan/${planID}/cancel`, null, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            });
-
+            const response = await ApiContext.put(`https://mea.monoinfinity.net/api/v1/import-plan/${planID}/cancel`);
             if (response.status === 200) {
                 toast.success("Cập nhật thành công");
                 getPlan(); // Gọi lại hàm getPlan() để tải lại dữ liệu
@@ -204,7 +186,7 @@ export default function DataGridDemo() {
 
     return (
         <BaseLayout>
-            <Container>
+            <Container maxWidth={false}>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
                     <Typography variant="h4">Danh sách kế hoạch mua sắm</Typography>
 

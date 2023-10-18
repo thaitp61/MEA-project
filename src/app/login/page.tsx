@@ -19,6 +19,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { toast } from "react-hot-toast";
 import logo from '@/image/logo.png';
 import Image from 'next/image';
+import axios from "axios";
 
 function Copyright(props: any) {
     return (
@@ -39,28 +40,38 @@ const defaultTheme = createTheme();
 const LoginPage = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    const { data: session } = useSession();
-    console.log({ session });
-    console.log("token:", session?.user?.token)
     const router = useRouter()
-    const token = session?.user?.token as string
-    const handleLogin = async () => {
-        const result = await signIn("credentials", {
-            username,
-            password,
-            redirect: false, // Để không tự động chuyển hướng
-        });
 
-        if (result?.error) {
-            if (result.error === "CredentialsSignin") {
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const loginResponse = await axios.post(
+                'https://mea.monoinfinity.net/api/v1/auth/login',
+                {
+                    username: username,
+                    password: password,
+                },
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            // if (!loginResponse.data || !loginResponse.data.token) {
+            //     console.error("Đăng nhập không thành công.");
+            //     return;
+            // }
+            toast.success("Đăng nhập thành công")
+            console.log(loginResponse.data.user);
+            const token = loginResponse?.data?.token;
+            localStorage.setItem("access_token", token);
+            router.replace("/")
+        } catch (error: any) {
+            if (error.response && error.response.status === 401) {
                 toast.error("Sai tên đăng nhập hoặc mật khẩu")
             } else {
-                console.error("Lỗi đăng nhập:", result.error);
+                toast.error("Có lỗi xảy ra khi đăng nhập")
             }
-        } else {
-            toast.success("Đăng nhập thành công")
-            localStorage.setItem("access_token", token)
-            router.push("/");
         }
     };
 

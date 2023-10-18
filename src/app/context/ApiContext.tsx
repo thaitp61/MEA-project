@@ -14,9 +14,7 @@ const getToken = () => {
 // Thiết lập interceptor để tự động thêm token vào header
 ApiContext.interceptors.request.use(
     (config) => {
-        // const token = getToken(eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjQwNzdkN2ZlLTI4MGUtZWRiYi1kYzVkLWJjNTY0ZmQ1ZTQ2YyIsInR5cGUiOiJBVVRIIiwiZXhwaXJlZEF0IjoxNzAwMTIyODIwNzYxLCJpYXQiOjE2OTc1MzA4MjB9.lWlaKsOF4_Ks9GKKaGuTZ6pDBAWHz7ryyULngBxDev8);
-        const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjQwNzdkN2ZlLTI4MGUtZWRiYi1kYzVkLWJjNTY0ZmQ1ZTQ2YyIsInR5cGUiOiJBVVRIIiwiZXhwaXJlZEF0IjoxNzAwMTIyODIwNzYxLCJpYXQiOjE2OTc1MzA4MjB9.lWlaKsOF4_Ks9GKKaGuTZ6pDBAWHz7ryyULngBxDev8';
-
+        const token = getToken();
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
