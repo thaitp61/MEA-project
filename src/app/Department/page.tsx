@@ -59,64 +59,24 @@ interface User {
 }
 export default function UserList() {
     const columns: GridColDef[] = [
-        { field: 'id', headerName: 'Mã nhân viên', width: 150 },
+        { field: 'id', headerName: 'Mã phòng ban', width: 150 },
         {
             field: 'name',
-            headerName: 'Họ và tên',
-            width: 150,
+            headerName: 'Tên phòng ban',
+            width: 200,
         },
         {
-            field: 'email',
-            headerName: 'Địa chỉ Email',
-            width: 150,
+            field: 'departments',
+            headerName: 'Mô tả',
+            type: "string",
+            width: 300,
         },
         {
-            field: 'phone',
-            headerName: 'Số điện thoại',
-            width: 150,
-        },
-        {
-            field: 'address',
-            headerName: 'Địa chỉ',
-            width: 150,
-        },
-        {
-            field: 'role',
-            headerName: 'Vai trò',
-            width: 150,
-            valueGetter: (params) => params.row.role?.name
-        },
-        {
-            field: 'department',
-            headerName: 'Phòng ban',
-            width: 150,
-            valueGetter: (params) => params.row.department?.name
-
-        },
-        {
-            field: 'startWorkDate',
-            headerName: 'Ngày làm việc',
+            field: 'createdAt',
+            headerName: 'Ngày tạo',
             width: 150,
             valueGetter: (params) => {
-                const startImportDateValue = params.row.startImportDate;
-
-                if (startImportDateValue) {
-                    const dateObject = new Date(startImportDateValue);
-                    const day = dateObject.getUTCDate();
-                    const month = dateObject.getUTCMonth() + 1;
-                    const year = dateObject.getUTCFullYear();
-                    return `${day}/${month}/${year}`;
-                }
-
-                return ''; // Handle the case where 'endImportDate' is not defined or falsy
-            },
-        },
-        {
-            field: 'endImportDate',
-            headerName: 'Ngày kết thúc',
-            width: 150,
-            valueGetter: (params) => {
-                const endImportDateValue = params.row.endImportDate;
+                const endImportDateValue = params.row.createdAt;
 
                 if (endImportDateValue) {
                     const dateObject = new Date(endImportDateValue);
@@ -130,6 +90,11 @@ export default function UserList() {
             },
         },
         {
+            field: 'status',
+            headerName: 'Trạng thái',
+            width: 150,
+        },
+        {
             field: "actions",
             type: "actions",
             headerName: "Chức năng",
@@ -137,6 +102,20 @@ export default function UserList() {
             cellClassName: "actions",
             renderCell: (params) => (
                 <div>
+                    <GridActionsCellItem
+                        icon={<ViewDetailIcon />}
+                        label="View"
+                        className="textPrimary"
+                        color="inherit"
+                    // onClick={() => handleApprovePlan(params.row?.id)}
+                    />
+                    <GridActionsCellItem
+                        icon={<EditIcon />}
+                        label="Edit"
+                        className="textPrimary"
+                        color="inherit"
+                    // onClick={() => handleApprovePlan(params.row?.id)}
+                    />
                     <GridActionsCellItem
                         icon={<BlockIcon />}
                         label="Delete"
@@ -147,38 +126,36 @@ export default function UserList() {
             ),
         }
     ];
-    const [users, setUsers] = useState<User[]>([]);
+    const [departments, setDepartments] = useState<User[]>([]);
     const [page, setPage] = useState(0);
     const [pageSize, setPageSize] = useState(10);
-    const [totalUsers, setTotalUsers] = useState(0);
+    // const [totalUsers, setTotalUsers] = useState(0);
 
-    const getUser = async () => {
+    const getDepartment = async () => {
         try {
-            const response = await ApiContext.get('/user',
+            const response = await ApiContext.get('/department',
                 {
                     params: {
                         page: 0,
                         pageSize: 50,
                     },
                 });
-            const totalUsers = response?.data?.count
-            setTotalUsers(totalUsers)
-            const userList = response?.data?.data; // Danh sách người dùng từ API
-            setUsers(userList);
+            const departmentList = response?.data?.data; // Danh sách người dùng từ API
+            setDepartments(departmentList);
             // setPlans(planList);
         } catch (error) {
             console.error('Lỗi khi gọi API:', error);
         }
     };
     useEffect(() => {
-        getUser();
+        getDepartment();
     }, [page, pageSize]);
     const DeleteUser = async (userID: string) => {
         try {
             const response = await ApiContext.delete(`https://mea.monoinfinity.net/api/v1/user/${userID}`);
             if (response.status === 200) {
                 toast.success("Cập nhật thành công");
-                getUser(); // Gọi lại hàm getPlan() để tải lại dữ liệu
+                getDepartment(); // Gọi lại hàm getPlan() để tải lại dữ liệu
             }
         } catch (error) {
             console.error('API Error:', error);
@@ -217,7 +194,7 @@ export default function UserList() {
                     <Typography variant="h4">Danh sách nhân viên</Typography>
 
                     <Button variant="contained" color="inherit">
-                        Tạo mới nhân viên
+                        Tạo mới phòng ban
                     </Button>
                 </Stack>
                 <Card>
@@ -229,7 +206,7 @@ export default function UserList() {
                     </Tabs>
                     <Box sx={{ height: 540, width: '100%' }}>
                         <DataGrid
-                            rows={users}
+                            rows={departments}
                             columns={columns}
                             slots={{
                                 pagination: CustomPagination,

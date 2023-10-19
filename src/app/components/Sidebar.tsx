@@ -50,11 +50,11 @@ interface UserData {
 
 const SidebarInformation: SidebarInformation[] = [
     {
-        href: '/QuanLyVatTu/ThongBao',
+        href: '/Notification',
         Icon: IoMdNotifications,
     },
     {
-        href: '/QuanLyVatTu/TinNhan',
+        href: '/Message',
         Icon: BsMessenger,
     },
     {
@@ -86,6 +86,11 @@ const sidebarItems: SidebarItem[] = [
     {
         name: 'Danh sách nhân viên',
         href: '/UserList',
+        Icon: AiTwotoneHome,
+    },
+    {
+        name: 'Danh sách phòng ban',
+        href: '/Department',
         Icon: AiTwotoneHome,
     },
 ];

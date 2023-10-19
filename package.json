@@ -13,6 +13,7 @@
     "@emotion/styled": "^11.11.0",
     "@iconify/react": "^4.1.1",
     "@mui/icons-material": "^5.14.9",
+    "@mui/lab": "^5.0.0-alpha.149",
     "@mui/material": "^5.14.13",
     "@mui/x-data-grid": "^6.16.2",
     "@mui/x-data-grid-premium": "^6.16.2",
@@ -29,6 +30,8 @@
     "react-dom": "18.2.0",
     "react-hot-toast": "^2.4.1",
     "react-icons": "^4.11.0",
+    "stream-chat": "^8.13.1",
+    "stream-chat-react": "^10.14.0",
     "swr": "^2.2.4",
     "typescript": "5.2.2"
   }

@@ -1,0 +1,20 @@
+.notification-item {
+    padding: 10px;
+  }
+  
+  .notification-content {
+    font-weight: normal;
+  }
+  
+  .notification-content.marked {
+    font-weight: bold;
+  }
+  
+  .notification-time {
+    color: inherit;
+  }
+  
+  .notification-time.marked {
+    color: teal;
+  }
+  
