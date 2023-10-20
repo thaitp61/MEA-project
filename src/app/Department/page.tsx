@@ -8,7 +8,7 @@ import {
     GridPagination,
 } from '@mui/x-data-grid';
 import BaseLayout from '../components/BaseLayout';
-import { Button, Card, Checkbox, Container, IconButton, MenuItem, Paper, Popover, Stack, Tab, TableBody, TableCell, TableRow, Tabs, Typography } from '@mui/material';
+import { Button, Card, Checkbox, Container, IconButton, MenuItem, Modal, Paper, Popover, PopoverVirtualElement, Stack, Tab, TableBody, TableCell, TableRow, Tabs, Typography } from '@mui/material';
 import { Icon } from '@iconify/react';
 import axios from 'axios'
 import useSWR from "swr";
@@ -21,31 +21,21 @@ import { toast } from 'react-hot-toast';
 import ApiContext from '../context/ApiContext';
 import MuiPagination from '@mui/material/Pagination';
 import { TablePaginationProps } from '@mui/material/TablePagination';
+import Iconify from '../components/iconify';
+import LoadingScreen from 'react-loading-screen';
+import { CiKeyboard } from 'react-icons/ci';
 
-function Pagination({
-    page,
-    onPageChange,
-    className,
-}: Pick<TablePaginationProps, 'page' | 'onPageChange' | 'className'>) {
-    const apiRef = useGridApiContext();
-    const pageCount = useGridSelector(apiRef, gridPageCountSelector);
-
-    return (
-        <MuiPagination
-            color="primary"
-            className={className}
-            count={pageCount}
-            page={page + 1}
-            onChange={(event, newPage) => {
-                onPageChange(event as any, newPage - 1);
-            }}
-        />
-    );
-}
-
-function CustomPagination(props: any) {
-    return <GridPagination ActionsComponent={Pagination} {...props} />;
-}
+const style = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 400,
+    bgcolor: 'background.paper',
+    borderRadius: 2, // Thêm bo cong 4px
+    border: 'none', // Loại bỏ viền
+    p: 4,
+};
 interface User {
     id: string;
     name: string;
@@ -57,7 +47,8 @@ interface User {
     startWorkDate: string;
     endImportDate: string;
 }
-export default function UserList() {
+export default function DepartmentList() {
+
     const columns: GridColDef[] = [
         { field: 'id', headerName: 'Mã phòng ban', width: 150 },
         {
@@ -102,34 +93,21 @@ export default function UserList() {
             cellClassName: "actions",
             renderCell: (params) => (
                 <div>
-                    <GridActionsCellItem
-                        icon={<ViewDetailIcon />}
-                        label="View"
-                        className="textPrimary"
-                        color="inherit"
-                    // onClick={() => handleApprovePlan(params.row?.id)}
-                    />
-                    <GridActionsCellItem
-                        icon={<EditIcon />}
-                        label="Edit"
-                        className="textPrimary"
-                        color="inherit"
-                    // onClick={() => handleApprovePlan(params.row?.id)}
-                    />
-                    <GridActionsCellItem
-                        icon={<BlockIcon />}
-                        label="Delete"
-                        color="inherit"
-                        onClick={() => handleDeleteUser(params.row?.id)}
-                    />
+                    <IconButton onClick={handleOpenMenu(params.row?.id, params.row?.name)}>
+                        <Icon icon="eva:more-vertical-fill" />
+                    </IconButton>
                 </div>
             ),
         }
     ];
     const [departments, setDepartments] = useState<User[]>([]);
     const [page, setPage] = useState(0);
-    const [pageSize, setPageSize] = useState(10);
+    const [pageSize, setPageSize] = useState(50);
     // const [totalUsers, setTotalUsers] = useState(0);
+    const [departmentID, setDepartmentID] = useState('');
+    const [departmentName, setDepartmentName] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [totalDeparment, setTotalDepartment] = useState(0);
 
     const getDepartment = async () => {
         try {
@@ -142,17 +120,43 @@ export default function UserList() {
                 });
             const departmentList = response?.data?.data; // Danh sách người dùng từ API
             setDepartments(departmentList);
+            setLoading(false); // Tắt trạng thái loading khi dữ liệu đã được tải
+
             // setPlans(planList);
         } catch (error) {
             console.error('Lỗi khi gọi API:', error);
         }
     };
-    useEffect(() => {
-        getDepartment();
-    }, [page, pageSize]);
-    const DeleteUser = async (userID: string) => {
+    // useEffect(() => {
+    //     getDepartment();
+    // }, [page, pageSize]);
+    const fetcher = async (url: string) => {
         try {
-            const response = await ApiContext.delete(`https://mea.monoinfinity.net/api/v1/user/${userID}`);
+            const response = await ApiContext.get(url);
+            setTotalDepartment(response?.data?.count);
+            return response?.data?.data;
+        } catch (error) {
+            console.error('Lỗi khi gọi API:', error);
+            throw error;
+        }
+    }
+    const [paginationModel, setPaginationModel] = React.useState({
+        page: 0,
+        pageSize: 10,
+    });
+    const { data, error, isLoading } = useSWR(
+        `/department?page=${paginationModel?.page}&pageSize=${paginationModel?.pageSize}`,
+        fetcher,
+        {
+            initialData: [], // Dữ liệu ban đầu
+            revalidateOnFocus: false,
+            revalidateOnReconnect: false,
+        }
+    );
+
+    const DeleteDepartment = async (deparmentID: string) => {
+        try {
+            const response = await ApiContext.delete(`/department/${deparmentID}`);
             if (response.status === 200) {
                 toast.success("Cập nhật thành công");
                 getDepartment(); // Gọi lại hàm getPlan() để tải lại dữ liệu
@@ -162,63 +166,116 @@ export default function UserList() {
             toast.success("Cập nhật thất bại");
         }
     }
-    const handleDeleteUser = (userID: string) => {
-        DeleteUser(userID);
-        console.log("reject PlanID:", userID)
-    }
 
     const [open, setOpen] = React.useState(null);
+    const [openModal, setOpenModal] = useState<boolean>(false);
+    const [value, setValue] = useState("");
+
+    const handleOpen = () => setOpenModal(true);
+    const handleClose = () => setOpenModal(false);
+
+    const handleSubmit = () => {
+        DeleteDepartment(departmentID);
+        handleClose();
+        setOpen(null);
+    }
 
     const [activeTab, setActiveTab] = React.useState('');
     const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
         setActiveTab(newValue);
     };
+
     const handleCloseMenu = () => {
         setOpen(null);
     };
-    const handleOpenMenu = (event: any) => {
+    const handleOpenMenu = (departmentID: string, departmentName: string) => (event: any) => {
         setOpen(event.currentTarget);
+        setDepartmentID(departmentID);
+        setDepartmentName(departmentName);
     };
-    //page size
-    const [paginationModel, setPaginationModel] = React.useState({
-        pageSize: pageSize,
-        page: page,
-    });
-
-
-
     return (
         <BaseLayout>
-            <Container maxWidth={false}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
-                    <Typography variant="h4">Danh sách nhân viên</Typography>
+            {isLoading ? ( // Hiển thị LoadingScreen nếu đang trong trạng thái loading
+                <LoadingScreen
+                    loading={isLoading}
+                    bgColor="rgba(255,255,255,0.8)"
+                    spinnerColor="#9ee5f8"
+                    textColor="#676767"
+                    logoSrc=""
+                    text=""
+                />
+            ) : (
+                <Container maxWidth={false}>
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
+                        <Typography variant="h4">Danh sách nhân viên</Typography>
 
-                    <Button variant="contained" color="inherit">
-                        Tạo mới phòng ban
-                    </Button>
-                </Stack>
-                <Card>
-                    <Tabs value={activeTab} onChange={handleTabChange} aria-label="Product status tabs">
-                        <Tab label="Tất cả" value="1" />
-                        <Tab label="Chưa duyệt" value="2" />
-                        <Tab label="Đã duyệt" value="3" />
-                        <Tab label="Đã hoàn thành" value="4" />
-                    </Tabs>
-                    <Box sx={{ height: 540, width: '100%' }}>
-                        <DataGrid
-                            rows={departments}
-                            columns={columns}
-                            slots={{
-                                pagination: CustomPagination,
-                            }}
-                            paginationModel={paginationModel}
-                            onPaginationModelChange={setPaginationModel}
-                            pageSizeOptions={[10, 20, 50]}
+                        <Button variant="contained" color="inherit">
+                            Tạo mới phòng ban
+                        </Button>
+                    </Stack>
+                    <Card>
+                        <Tabs value={activeTab} onChange={handleTabChange} aria-label="Product status tabs">
+                            <Tab label="Tất cả" value="1" />
+                            <Tab label="Chưa duyệt" value="2" />
+                            <Tab label="Đã duyệt" value="3" />
+                            <Tab label="Đã hoàn thành" value="4" />
+                        </Tabs>
+                        <Box sx={{ height: 540, width: '100%' }}>
+                            <DataGrid
+                                rows={data}
+                                columns={columns}
+                                paginationModel={paginationModel}
+                                onPaginationModelChange={setPaginationModel}
+                                pageSizeOptions={[10, 20, 50]}
+                                rowCount={totalDeparment}
+                                paginationMode='server'
+                            />
+                        </Box>
+                    </Card>
+                    <Popover
+                        open={!!open}
+                        anchorEl={open}
+                        onClose={handleCloseMenu}
+                        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+                        PaperProps={{
+                            sx: { width: 140 },
+                        }}
+                    >
+                        <MenuItem onClick={handleCloseMenu}>
+                            <Iconify icon="eva:edit-fill" sx={{ marginRight: 2 }} />
+                            Edit
+                        </MenuItem>
 
-                        />
-                    </Box>
-                </Card>
-            </Container>
+                        <MenuItem onClick={handleOpen} sx={{ color: 'error.main' }}>
+                            <Iconify icon="eva:trash-2-outline" sx={{ marginRight: 2 }} />
+                            Delete
+                        </MenuItem>
+                        <Modal
+                            open={openModal}
+                            onClose={handleClose}
+                            aria-labelledby="modal-modal-title"
+                            aria-describedby="modal-modal-description"
+
+                        >
+                            <Box sx={style}>
+                                <Typography id="modal-modal-title" variant="h6" component="h2">
+                                    Bạn có chắc chắn muốn xoá phòng ban <strong>{departmentName}</strong> không ?
+                                </Typography>
+                                <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+                                    <Button onClick={handleClose} sx={{ mr: 2 }} >
+                                        Đóng
+                                    </Button>
+
+                                    <Button onClick={handleSubmit} variant="contained" color="error">
+                                        Xác nhận
+                                    </Button>
+                                </Box>
+                            </Box>
+                        </Modal>
+                    </Popover>
+                </Container>
+            )}
         </BaseLayout>
 
     );
