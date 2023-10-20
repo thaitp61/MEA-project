@@ -8,7 +8,7 @@ import {
     GridPagination,
 } from '@mui/x-data-grid';
 import BaseLayout from '../components/BaseLayout';
-import { Button, Card, Checkbox, Container, IconButton, MenuItem, Modal, Paper, Popover, PopoverVirtualElement, Stack, Tab, TableBody, TableCell, TableRow, Tabs, Typography } from '@mui/material';
+import { Button, Card, Checkbox, Container, IconButton, LinearProgress, MenuItem, Modal, Paper, Popover, PopoverVirtualElement, Stack, Tab, TableBody, TableCell, TableRow, Tabs, Typography } from '@mui/material';
 import { Icon } from '@iconify/react';
 import axios from 'axios'
 import useSWR from "swr";
@@ -22,7 +22,6 @@ import ApiContext from '../context/ApiContext';
 import MuiPagination from '@mui/material/Pagination';
 import { TablePaginationProps } from '@mui/material/TablePagination';
 import Iconify from '../components/iconify';
-import LoadingScreen from 'react-loading-screen';
 import { CiKeyboard } from 'react-icons/ci';
 
 const style = {
@@ -101,12 +100,9 @@ export default function DepartmentList() {
         }
     ];
     const [departments, setDepartments] = useState<User[]>([]);
-    const [page, setPage] = useState(0);
-    const [pageSize, setPageSize] = useState(50);
     // const [totalUsers, setTotalUsers] = useState(0);
     const [departmentID, setDepartmentID] = useState('');
     const [departmentName, setDepartmentName] = useState('');
-    const [loading, setLoading] = useState(true);
     const [totalDeparment, setTotalDepartment] = useState(0);
 
     const getDepartment = async () => {
@@ -120,8 +116,6 @@ export default function DepartmentList() {
                 });
             const departmentList = response?.data?.data; // Danh sách người dùng từ API
             setDepartments(departmentList);
-            setLoading(false); // Tắt trạng thái loading khi dữ liệu đã được tải
-
             // setPlans(planList);
         } catch (error) {
             console.error('Lỗi khi gọi API:', error);
@@ -134,6 +128,7 @@ export default function DepartmentList() {
         try {
             const response = await ApiContext.get(url);
             setTotalDepartment(response?.data?.count);
+            setDepartments(response?.data?.data)
             return response?.data?.data;
         } catch (error) {
             console.error('Lỗi khi gọi API:', error);
@@ -195,87 +190,80 @@ export default function DepartmentList() {
     };
     return (
         <BaseLayout>
-            {isLoading ? ( // Hiển thị LoadingScreen nếu đang trong trạng thái loading
-                <LoadingScreen
-                    loading={isLoading}
-                    bgColor="rgba(255,255,255,0.8)"
-                    spinnerColor="#9ee5f8"
-                    textColor="#676767"
-                    logoSrc=""
-                    text=""
-                />
-            ) : (
-                <Container maxWidth={false}>
-                    <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
-                        <Typography variant="h4">Danh sách nhân viên</Typography>
+            <Container maxWidth={false}>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
+                    <Typography variant="h4">Danh sách nhân viên</Typography>
 
-                        <Button variant="contained" color="inherit">
-                            Tạo mới phòng ban
-                        </Button>
-                    </Stack>
-                    <Card>
-                        <Tabs value={activeTab} onChange={handleTabChange} aria-label="Product status tabs">
-                            <Tab label="Tất cả" value="1" />
-                            <Tab label="Chưa duyệt" value="2" />
-                            <Tab label="Đã duyệt" value="3" />
-                            <Tab label="Đã hoàn thành" value="4" />
-                        </Tabs>
-                        <Box sx={{ height: 540, width: '100%' }}>
-                            <DataGrid
-                                rows={data}
-                                columns={columns}
-                                paginationModel={paginationModel}
-                                onPaginationModelChange={setPaginationModel}
-                                pageSizeOptions={[10, 20, 50]}
-                                rowCount={totalDeparment}
-                                paginationMode='server'
-                            />
-                        </Box>
-                    </Card>
-                    <Popover
-                        open={!!open}
-                        anchorEl={open}
-                        onClose={handleCloseMenu}
-                        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-                        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-                        PaperProps={{
-                            sx: { width: 140 },
-                        }}
+                    <Button variant="contained" color="inherit">
+                        Tạo mới phòng ban
+                    </Button>
+                </Stack>
+                <Card>
+                    <Tabs value={activeTab} onChange={handleTabChange} aria-label="Product status tabs">
+                        <Tab label="Tất cả" value="1" />
+                        <Tab label="Chưa duyệt" value="2" />
+                        <Tab label="Đã duyệt" value="3" />
+                        <Tab label="Đã hoàn thành" value="4" />
+                    </Tabs>
+                    <Box sx={{ height: 540, width: '100%' }}>
+                        <DataGrid
+                            rows={departments}
+                            columns={columns}
+                            paginationModel={paginationModel}
+                            onPaginationModelChange={setPaginationModel}
+                            pageSizeOptions={[10, 20, 50]}
+                            rowCount={totalDeparment}
+                            slots={{
+                                loadingOverlay: LinearProgress,
+                            }}
+                            loading={isLoading}
+                            paginationMode='server'
+                        />
+                    </Box>
+                </Card>
+                <Popover
+                    open={!!open}
+                    anchorEl={open}
+                    onClose={handleCloseMenu}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+                    PaperProps={{
+                        sx: { width: 140 },
+                    }}
+                >
+                    <MenuItem onClick={handleCloseMenu}>
+                        <Iconify icon="eva:edit-fill" sx={{ marginRight: 2 }} />
+                        Edit
+                    </MenuItem>
+
+                    <MenuItem onClick={handleOpen} sx={{ color: 'error.main' }}>
+                        <Iconify icon="eva:trash-2-outline" sx={{ marginRight: 2 }} />
+                        Delete
+                    </MenuItem>
+                    <Modal
+                        open={openModal}
+                        onClose={handleClose}
+                        aria-labelledby="modal-modal-title"
+                        aria-describedby="modal-modal-description"
+
                     >
-                        <MenuItem onClick={handleCloseMenu}>
-                            <Iconify icon="eva:edit-fill" sx={{ marginRight: 2 }} />
-                            Edit
-                        </MenuItem>
+                        <Box sx={style}>
+                            <Typography id="modal-modal-title" variant="h6" component="h2">
+                                Bạn có chắc chắn muốn xoá phòng ban <strong>{departmentName}</strong> không ?
+                            </Typography>
+                            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+                                <Button onClick={handleClose} sx={{ mr: 2 }} >
+                                    Đóng
+                                </Button>
 
-                        <MenuItem onClick={handleOpen} sx={{ color: 'error.main' }}>
-                            <Iconify icon="eva:trash-2-outline" sx={{ marginRight: 2 }} />
-                            Delete
-                        </MenuItem>
-                        <Modal
-                            open={openModal}
-                            onClose={handleClose}
-                            aria-labelledby="modal-modal-title"
-                            aria-describedby="modal-modal-description"
-
-                        >
-                            <Box sx={style}>
-                                <Typography id="modal-modal-title" variant="h6" component="h2">
-                                    Bạn có chắc chắn muốn xoá phòng ban <strong>{departmentName}</strong> không ?
-                                </Typography>
-                                <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-                                    <Button onClick={handleClose} sx={{ mr: 2 }} >
-                                        Đóng
-                                    </Button>
-
-                                    <Button onClick={handleSubmit} variant="contained" color="error">
-                                        Xác nhận
-                                    </Button>
-                                </Box>
+                                <Button onClick={handleSubmit} variant="contained" color="error">
+                                    Xác nhận
+                                </Button>
                             </Box>
-                        </Modal>
-                    </Popover>
-                </Container>
-            )}
+                        </Box>
+                    </Modal>
+                </Popover>
+            </Container>
         </BaseLayout>
 
     );
