@@ -138,29 +138,7 @@ export default function DataGridDemo() {
             ),
         }
     ];
-    // const fetcher = (url: string) => axios.get(url).then(res => res.data);
 
-    // const { data, error, isLoading } = useSWR(
-    //     ["https://mea.monoinfinity.net/api/v1/import-plan",
-    //         {
-    //             headers: {
-    //                 Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjQwNzdkN2ZlLTI4MGUtZWRiYi1kYzVkLWJjNTY0ZmQ1ZTQ2YyIsInR5cGUiOiJBVVRIIiwiZXhwaXJlZEF0IjoxNzAwMDY2MzU2ODA3LCJpYXQiOjE2OTc0NzQzNTZ9.7yjyNqwWNEgvyw-wnu4mUaQHfp5NsNIEEbM6tv4C73k',
-    //             },
-    //             params: {
-    //                 page: 0,
-    //                 pageSize: 12,
-    //                 filters: [`status||${FilterComparator.EQUAL}||DRAFT`],
-    //                 orderBy: [],
-    //             },
-    //         }
-    //     ],
-    //     fetcher,
-    //     {
-    //         initialData: [], // Dữ liệu ban đầu
-    //         revalidateOnFocus: false,
-    //         revalidateOnReconnect: false,
-    //     }
-    // );
     const [plans, setPlans] = useState([]);
     // Chuỗi ngày tháng gốc
     const dateString = "2023-10-18T01:54:08.254Z";

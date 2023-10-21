@@ -8,10 +8,10 @@ import {
     GridPagination,
 } from '@mui/x-data-grid';
 import BaseLayout from '../components/BaseLayout';
-import { Button, Card, Checkbox, Container, IconButton, LinearProgress, MenuItem, Modal, Paper, Popover, PopoverVirtualElement, Stack, Tab, TableBody, TableCell, TableRow, Tabs, Typography } from '@mui/material';
+import { Button, Card, Checkbox, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Grid, IconButton, LinearProgress, MenuItem, Modal, Paper, Popover, PopoverVirtualElement, Stack, Tab, TableBody, TableCell, TableRow, Tabs, TextField, Typography } from '@mui/material';
 import { Icon } from '@iconify/react';
 import axios from 'axios'
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import React, { useState, useEffect } from 'react';
 import BlockIcon from '@mui/icons-material/Block';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -23,7 +23,8 @@ import MuiPagination from '@mui/material/Pagination';
 import { TablePaginationProps } from '@mui/material/TablePagination';
 import Iconify from '../components/iconify';
 import { CiKeyboard } from 'react-icons/ci';
-
+import "./layout.css"
+import { FilterComparator } from '../models/common';
 const style = {
     position: 'absolute',
     top: '50%',
@@ -35,16 +36,25 @@ const style = {
     border: 'none', // Loại bỏ viền
     p: 4,
 };
-interface User {
+interface Department {
     id: string;
+    createdAt: string;
+    updatedAt: string;
+    isDeleted: string;
+    isRequiredUpdate: string;
     name: string;
-    email: string;
-    phone: string;
-    address: string;
-    role: string;
-    department: string;
-    startWorkDate: string;
-    endImportDate: string;
+    description: string;
+    status: string;
+}
+interface DepartmentInfor {
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    isDeleted: string;
+    isRequiredUpdate: string;
+    name: string;
+    description: string;
+    status: string;
 }
 export default function DepartmentList() {
 
@@ -56,7 +66,7 @@ export default function DepartmentList() {
             width: 200,
         },
         {
-            field: 'departments',
+            field: 'description',
             headerName: 'Mô tả',
             type: "string",
             width: 300,
@@ -99,85 +109,198 @@ export default function DepartmentList() {
             ),
         }
     ];
-    const [departments, setDepartments] = useState<User[]>([]);
+    const [departments, setDepartments] = useState<Department[]>([]);
     // const [totalUsers, setTotalUsers] = useState(0);
-    const [departmentID, setDepartmentID] = useState('');
+    const [departmentID, setDepartmentID] = useState<string>('');
     const [departmentName, setDepartmentName] = useState('');
     const [totalDeparment, setTotalDepartment] = useState(0);
+    const [openEditDeparment, setEditDeparment] = useState(false);
+    const [openCreateDeparment, setCreateDeparment] = useState(false);
+    const [departmentInformation, setDepartmentInformation] = useState<DepartmentInfor>({
+        id: '',
+        createdAt: '',
+        updatedAt: '',
+        isDeleted: '',
+        isRequiredUpdate: '',
+        name: '',
+        description: '',
+        status: '',
+    });
+    const [departmentNameInfor, setDepartmentNameInfor] = useState<string>("");
+    const [departmentNameCreate, setDepartmentNameCreate] = useState<string>("");
+    const [deparmentDescriptionCreate, setDeparmentDescriptionCreate] = useState<string>("");
+    const [deparmentDescription, setDeparmentDescription] = useState<string>("");
+    const [loading, setLoading] = useState(true);
+
+    const [open, setOpen] = React.useState(null);
+    const [openModal, setOpenModal] = useState<boolean>(false);
+    const [value, setValue] = React.useState('');
+
+    const handleOpen = () => setOpenModal(true);
+    const handleClose = () => setOpenModal(false);
+    const [paginationModel, setPaginationModel] = React.useState({
+        page: 0,
+        pageSize: 10,
+    });
+    const [statusFilter, setStatusFilter] = React.useState(''); // Trạng thái filter mặc định là chuỗi trống
+
 
     const getDepartment = async () => {
         try {
             const response = await ApiContext.get('/department',
                 {
                     params: {
-                        page: 0,
-                        pageSize: 50,
+                        page: paginationModel?.page,
+                        pageSize: paginationModel?.pageSize,
+                        filters: statusFilter ? [`status||${FilterComparator.EQUAL}||${statusFilter}`] : [], // Sử dụng statusFilter nếu nó có giá trị
+                        orderBy: [],
                     },
                 });
             const departmentList = response?.data?.data; // Danh sách người dùng từ API
+            const totalDeparment = response?.data?.count
             setDepartments(departmentList);
+            setTotalDepartment(totalDeparment);
+            setLoading(false); // Tắt trạng thái loading khi dữ liệu đã được tải
             // setPlans(planList);
         } catch (error) {
             console.error('Lỗi khi gọi API:', error);
+            setLoading(false);
         }
     };
-    // useEffect(() => {
-    //     getDepartment();
-    // }, [page, pageSize]);
-    const fetcher = async (url: string) => {
-        try {
-            const response = await ApiContext.get(url);
-            setTotalDepartment(response?.data?.count);
-            setDepartments(response?.data?.data)
-            return response?.data?.data;
-        } catch (error) {
-            console.error('Lỗi khi gọi API:', error);
-            throw error;
-        }
-    }
-    const [paginationModel, setPaginationModel] = React.useState({
-        page: 0,
-        pageSize: 10,
-    });
-    const { data, error, isLoading } = useSWR(
-        `/department?page=${paginationModel?.page}&pageSize=${paginationModel?.pageSize}`,
-        fetcher,
-        {
-            initialData: [], // Dữ liệu ban đầu
-            revalidateOnFocus: false,
-            revalidateOnReconnect: false,
-        }
-    );
+    useEffect(() => {
+        getDepartment();
+        setLoading(true);
+    }, [paginationModel, statusFilter]);
 
+    // Xoá phòng ban
     const DeleteDepartment = async (deparmentID: string) => {
         try {
             const response = await ApiContext.delete(`/department/${deparmentID}`);
             if (response.status === 200) {
                 toast.success("Cập nhật thành công");
-                getDepartment(); // Gọi lại hàm getPlan() để tải lại dữ liệu
+                getDepartment();
             }
         } catch (error) {
             console.error('API Error:', error);
             toast.success("Cập nhật thất bại");
         }
     }
-
-    const [open, setOpen] = React.useState(null);
-    const [openModal, setOpenModal] = useState<boolean>(false);
-    const [value, setValue] = useState("");
-
-    const handleOpen = () => setOpenModal(true);
-    const handleClose = () => setOpenModal(false);
-
     const handleSubmit = () => {
         DeleteDepartment(departmentID);
         handleClose();
         setOpen(null);
     }
 
-    const [activeTab, setActiveTab] = React.useState('');
+    // ---------------------------------
+    // Get thông tin phòng ban
+
+    const GetInformationDepartment = async (deparmentID: string) => {
+        try {
+            const response = await ApiContext.get(`/department/${deparmentID}`);
+            const deparmentInfor = response?.data
+            setDepartmentInformation(deparmentInfor)
+        } catch (error) {
+            console.error('API Error:', error);
+        }
+    }
+
+    const handleOpenEditDeparment = () => {
+        setEditDeparment(true);
+        GetInformationDepartment(departmentID)
+    };
+    const handleOpenCreateDeparment = () => {
+        setCreateDeparment(true);
+    };
+
+    const handleCloseEditDepartment = () => {
+        setDepartmentNameInfor("");
+        setDeparmentDescription("");
+        setEditDeparment(false);
+        setOpen(null);
+    };
+    const handleCloseCreateDepartment = () => {
+        setDeparmentDescriptionCreate("");
+        setDepartmentNameCreate("");
+        setCreateDeparment(false);
+        setOpen(null);
+    };
+    const handleCreateEditDepartment = () => {
+        setCreateDeparment(false);
+        setOpen(null);
+    };
+
+    // Cập nhật phòng ban
+    const handleUpdateDepartment = async () => {
+        if (!departmentNameInfor) {
+            toast.error("Không để trống tên phòng ban!")
+            return;
+        }
+        if (!deparmentDescription) {
+            toast.error("Không để trống mô tả phòng ban")
+            return;
+        }
+        try {
+            const response = await ApiContext.put(`/department/${departmentID}`, {
+                name: departmentNameInfor,
+                description: deparmentDescription,
+            });
+            if (response.status === 200) {
+                getDepartment();
+                toast.success("Cập nhật thành công");
+                // Thực hiện các hành động khác sau khi cập nhật thành công
+            }
+        } catch (error) {
+            toast.error("Cập nhật thất bại");
+            console.error("Lỗi khi gọi API:", error);
+            // Xử lý lỗi khi gọi API
+        }
+        handleCloseEditDepartment();
+    };
+    const handleCreateDepartment = async () => {
+        if (!departmentNameCreate) {
+            toast.error("Không để trống tên phòng ban!")
+            return;
+        }
+        if (!deparmentDescriptionCreate) {
+            toast.error("Không để trống mô tả phòng ban")
+            return;
+        }
+        try {
+            const response = await ApiContext.post(`/department`, {
+                name: departmentNameCreate,
+                description: deparmentDescriptionCreate,
+            });
+            if (response.status === 200) {
+                getDepartment();
+                toast.success("Cập nhật thành công");
+                // Thực hiện các hành động khác sau khi cập nhật thành công
+            }
+        } catch (error) {
+            toast.error("Cập nhật thất bại");
+            // Xử lý lỗi khi gọi API
+        }
+        handleCloseCreateDepartment();
+    };
+    // ---------------------------------
+    // const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
+    //     setValue(newValue);
+    //     // Gọi lại API getNotificationList với các tham số tương ứng
+    //     if (newValue === 'UNREAD') {
+    //         getNotificationList(`status||${FilterComparator.EQUAL}||UNREAD`);
+    //     } else {
+    //         getNotificationList('');
+    //     }
+    // };
+
+
+
     const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
-        setActiveTab(newValue);
+        // Cập nhật trạng thái statusFilter dựa trên tab được chọn
+        if (newValue === 'INACTIVE') {
+            setStatusFilter('INACTIVE');
+        } else {
+            setStatusFilter(''); // Trạng thái khác
+        }
     };
 
     const handleCloseMenu = () => {
@@ -192,18 +315,73 @@ export default function DepartmentList() {
         <BaseLayout>
             <Container maxWidth={false}>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
-                    <Typography variant="h4">Danh sách nhân viên</Typography>
-
-                    <Button variant="contained" color="inherit">
+                    <Typography variant="h4">Danh sách phòng ban</Typography>
+                    <Button variant="contained"
+                        color='success'
+                        sx={{ backgroundColor: 'rgb(0, 167, 111)', color: '#fff' }}
+                        startIcon={<Iconify icon="eva:plus-fill" />}
+                        onClick={handleOpenCreateDeparment}
+                    >
                         Tạo mới phòng ban
                     </Button>
+                    <Dialog
+                        open={openCreateDeparment}
+                        onClose={handleCreateEditDepartment}
+                        scroll='paper'
+                        aria-labelledby="scroll-dialog-title"
+                        aria-describedby="scroll-dialog-description"
+                        fullWidth
+                        maxWidth='md'
+                    >
+                        <DialogTitle className="title-text" id="scroll-dialog-title-create">TẠO MỚI PHÒNG BAN</DialogTitle>
+                        <DialogContent sx={{ color: "rgb(0, 167, 111)" }} dividers>
+                            <Stack spacing={2} margin={2}>
+                                <TextField
+                                    id="name"
+                                    label="Tên phòng ban"
+                                    value={departmentNameCreate}
+                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                        setDepartmentNameCreate(event.target.value);
+                                    }}
+                                />
+                            </Stack>
+                            <Stack spacing={2} margin={2}>
+                                <TextField
+                                    id="desciption"
+                                    label="Mô tả"
+                                    multiline
+                                    rows={4}
+                                    value={deparmentDescriptionCreate}
+                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                        setDeparmentDescriptionCreate(event.target.value);
+                                    }}
+                                />
+                            </Stack>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button
+                                sx={{ color: 'rgb(0, 167, 111)' }}
+                                onClick={handleCloseCreateDepartment}
+                            >Huỷ</Button>
+                            <Button
+                                variant="contained"
+                                color='success'
+                                sx={{ backgroundColor: 'rgb(0, 167, 111)', color: '#fff' }}
+                                onClick={handleCreateDepartment}
+                            >Xác nhận</Button>
+                        </DialogActions>
+                    </Dialog>
                 </Stack>
                 <Card>
-                    <Tabs value={activeTab} onChange={handleTabChange} aria-label="Product status tabs">
-                        <Tab label="Tất cả" value="1" />
-                        <Tab label="Chưa duyệt" value="2" />
-                        <Tab label="Đã duyệt" value="3" />
-                        <Tab label="Đã hoàn thành" value="4" />
+                    <Tabs
+                        value={statusFilter}
+                        onChange={handleTabChange}
+                        indicatorColor="primary"
+                        textColor="primary"
+                        aria-label="full width tabs example"
+                    >
+                        <Tab label="Tất cả" value="" />
+                        <Tab label="Không hoạt động" value="INACTIVE" />
                     </Tabs>
                     <Box sx={{ height: 540, width: '100%' }}>
                         <DataGrid
@@ -216,7 +394,7 @@ export default function DepartmentList() {
                             slots={{
                                 loadingOverlay: LinearProgress,
                             }}
-                            loading={isLoading}
+                            loading={loading}
                             paginationMode='server'
                         />
                     </Box>
@@ -231,14 +409,102 @@ export default function DepartmentList() {
                         sx: { width: 140 },
                     }}
                 >
-                    <MenuItem onClick={handleCloseMenu}>
+                    <MenuItem onClick={handleOpenEditDeparment}>
                         <Iconify icon="eva:edit-fill" sx={{ marginRight: 2 }} />
-                        Edit
+                        Sửa
                     </MenuItem>
-
+                    <Dialog
+                        open={openEditDeparment}
+                        onClose={handleCloseEditDepartment}
+                        scroll='paper'
+                        aria-labelledby="scroll-dialog-title"
+                        aria-describedby="scroll-dialog-description"
+                        fullWidth
+                        maxWidth='md'
+                    >
+                        <DialogTitle className="title-text" id="scroll-dialog-title">CHỈNH SỬA PHÒNG BAN</DialogTitle>
+                        <DialogContent sx={{ color: "rgb(0, 167, 111)" }} dividers>
+                            <DialogTitle>Chi tiết phòng ban</DialogTitle>
+                            <Grid container spacing={2}>
+                                <Grid item xs={6}>
+                                    <Stack spacing={2} margin={2}>
+                                        <TextField variant="outlined"
+                                            id="deparmentID"
+                                            label="Mã phòng ban"
+                                            defaultValue={departmentInformation?.id}
+                                            InputProps={{
+                                                readOnly: true,
+                                            }}
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                        />
+                                        <TextField
+                                            variant="outlined"
+                                            label="Ngày tạo"
+                                            defaultValue={departmentInformation?.createdAt}
+                                            InputProps={{
+                                                readOnly: true,
+                                            }}
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                        />
+                                    </Stack>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Stack spacing={2} margin={2}>
+                                        <TextField
+                                            variant="outlined"
+                                            label="Tên phòng ban"
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            defaultValue={departmentName}
+                                            onChange={(e) => setDepartmentNameInfor(e.target.value)}
+                                        />
+                                        <TextField
+                                            variant="outlined"
+                                            label="Ngày cập nhật gần đây"
+                                            InputProps={{
+                                                readOnly: true,
+                                            }}
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            defaultValue={departmentInformation?.updatedAt} />
+                                    </Stack>
+                                </Grid>
+                            </Grid>
+                            <Stack spacing={2} margin={2}>
+                                <TextField
+                                    label="Mô tả"
+                                    multiline
+                                    rows={4}
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                    defaultValue={departmentInformation?.description}
+                                    onChange={(e) => setDeparmentDescription(e.target.value)}
+                                />
+                            </Stack>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button
+                                sx={{ color: 'rgb(0, 167, 111)' }}
+                                onClick={handleCloseEditDepartment}
+                            >Huỷ</Button>
+                            <Button
+                                variant="contained"
+                                color='success'
+                                sx={{ backgroundColor: 'rgb(0, 167, 111)', color: '#fff' }}
+                                onClick={handleUpdateDepartment}
+                            >Xác nhận</Button>
+                        </DialogActions>
+                    </Dialog>
                     <MenuItem onClick={handleOpen} sx={{ color: 'error.main' }}>
                         <Iconify icon="eva:trash-2-outline" sx={{ marginRight: 2 }} />
-                        Delete
+                        Xoá
                     </MenuItem>
                     <Modal
                         open={openModal}
