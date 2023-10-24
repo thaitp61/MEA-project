@@ -9,6 +9,8 @@ import {
     AiOutlineMenuFold,
     AiOutlineMenuUnfold,
     AiOutlineShoppingCart,
+    AiOutlineUser,
+    AiOutlineBank,
 } from "react-icons/ai";
 import { IoMdNotifications } from "react-icons/Io";
 import { BsMessenger, BsListCheck, BsClipboardCheck } from "react-icons/bs";
@@ -76,22 +78,22 @@ const sidebarItems: SidebarItem[] = [
     {
         name: 'Danh sách kế hoạch mua sắm',
         href: '/ProcurementPlan',
-        Icon: AiTwotoneHome,
+        Icon: AiOutlineShoppingCart,
     },
     {
         name: 'Danh sách thiết bị y tế',
         href: '/MedicalEquipment',
-        Icon: AiTwotoneHome,
+        Icon: CiMedicalClipboard,
     },
     {
         name: 'Danh sách nhân viên',
         href: '/UserList',
-        Icon: AiTwotoneHome,
+        Icon: AiOutlineUser,
     },
     {
         name: 'Danh sách phòng ban',
         href: '/Department',
-        Icon: AiTwotoneHome,
+        Icon: AiOutlineBank,
     },
 ];
 

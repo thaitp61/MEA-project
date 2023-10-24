@@ -7,7 +7,7 @@ import {
     gridPageCountSelector,
     GridPagination,
 } from '@mui/x-data-grid'; import BaseLayout from '../components/BaseLayout';
-import { Button, Card, Checkbox, Container, IconButton, MenuItem, Paper, Popover, Stack, Tab, TableBody, TableCell, TablePaginationProps, TableRow, Tabs, Typography } from '@mui/material';
+import { Button, Card, Checkbox, Container, IconButton, LinearProgress, MenuItem, Paper, Popover, Stack, Tab, TableBody, TableCell, TablePaginationProps, TableRow, Tabs, Typography } from '@mui/material';
 import { Icon } from '@iconify/react';
 import axios from 'axios'
 import useSWR from "swr";
@@ -19,6 +19,8 @@ import ViewDetailIcon from '@mui/icons-material/Visibility';
 import { toast } from 'react-hot-toast';
 import ApiContext from '../context/ApiContext';
 import MuiPagination from '@mui/material/Pagination';
+import Iconify from '../components/iconify';
+import { Modal } from 'stream-chat-react';
 
 function Pagination({
     page,
@@ -114,7 +116,7 @@ export default function DataGridDemo() {
             cellClassName: "actions",
             renderCell: (params) => (
                 <div>
-                    <GridActionsCellItem
+                    {/* <GridActionsCellItem
                         icon={<ViewDetailIcon />}
                         label="View"
                         className="textPrimary"
@@ -133,28 +135,30 @@ export default function DataGridDemo() {
                         label="Reject"
                         color="inherit"
                         onClick={() => handleRejectPlan(params.row?.id)}
-                    />
+                    /> */}
+                    <div>
+                        <IconButton onClick={handleOpenMenu(params.row?.id)}>
+                            <Icon icon="eva:more-vertical-fill" />
+                        </IconButton>
+                    </div>
                 </div>
             ),
         }
     ];
 
+    const [openViewModal, setOpenViewModal] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [paginationModel, setPaginationModel] = React.useState({
+        page: 0,
+        pageSize: 10,
+    });
+    const [totalPlans, setTotalPlans] = useState(0);
+    const [planID, setPlanID] = useState<string>('');
+
+
+
     const [plans, setPlans] = useState([]);
     // Chuỗi ngày tháng gốc
-    const dateString = "2023-10-18T01:54:08.254Z";
-
-    // Chuyển đổi thành một đối tượng Date
-    const dateObject = new Date(dateString);
-
-    // Lấy ngày, tháng và năm từ đối tượng Date
-    const day = dateObject.getUTCDate();
-    const month = dateObject.getUTCMonth() + 1; // Tháng bắt đầu từ 0, cần +1
-    const year = dateObject.getUTCFullYear();
-
-    // Định dạng lại thành "dd/mm/yyyy"
-    const formattedDate = `${day}/${month}/${year}`;
-
-    console.log(formattedDate); // Kết quả: "18/10/2023"
 
 
     const getPlan = async () => {
@@ -162,22 +166,27 @@ export default function DataGridDemo() {
             const response = await ApiContext.get('/import-plan',
                 {
                     params: {
-                        page: 0,
-                        pageSize: 10,
+                        page: paginationModel.page,
+                        pageSize: paginationModel.pageSize,
+                        orderBy: [`updatedAt||${SortOrder.DESC}`],
                         filters: [`status||${FilterComparator.EQUAL}||SUBMITTED`],
-                        orderBy: [],
                     },
                 });
             const planList = response?.data?.data; // Danh sách người dùng từ API
+            const total = response?.data?.count
             setPlans(planList);
-            // setPlans(planList);
+            setTotalPlans(total);
+            setLoading(false); // Tắt trạng thái loading khi dữ liệu đã được tải
         } catch (error) {
             console.error('Lỗi khi gọi API:', error);
         }
     };
     useEffect(() => {
         getPlan();
-    }, []);
+        setLoading(true);
+
+    }, [paginationModel]);
+
     const ApprovePlan = async (planID: string) => {
         try {
             const response = await ApiContext.put(`https://mea.monoinfinity.net/api/v1/import-plan/${planID}/approve`, null, {
@@ -215,9 +224,6 @@ export default function DataGridDemo() {
     }
 
 
-
-    console.log("data:", plans)
-
     const [open, setOpen] = React.useState(null);
 
     const [activeTab, setActiveTab] = React.useState('');
@@ -227,18 +233,28 @@ export default function DataGridDemo() {
     const handleCloseMenu = () => {
         setOpen(null);
     };
-    const handleOpenMenu = (event: any) => {
-        setOpen(event.currentTarget);
+    // const handleOpenMenu = (event: any) => {
+    //     setOpen(event.currentTarget);
+    // };
+
+
+    const handleOpenModalEdit = () => {
+        // setOpenViewModal(true);
+        // GetUserDetail(userID)F
+        ApprovePlan(planID);
+        setOpen(null)
     };
-    // if (isLoading) {
-    //     return <div>Loading....</div>
-    // }
-    const [page, setPage] = useState(0);
-    const [pageSize, setPageSize] = useState(10);
-    const [paginationModel, setPaginationModel] = React.useState({
-        pageSize: pageSize,
-        page: page,
-    });
+    const handleOpenModalReject = () => {
+        // setOpenViewModal(true);
+        // GetUserDetail(userID)F
+        RejectPlan(planID);
+        setOpen(null)
+    };
+    const handleOpenMenu = (planID: string) => (event: any) => {
+        setOpen(event.currentTarget);
+        setPlanID(planID);
+    };
+    console.log("planID", planID)
 
     return (
         <BaseLayout>
@@ -246,60 +262,85 @@ export default function DataGridDemo() {
                 <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
                     <Typography variant="h4">Danh sách kế hoạch mua sắm</Typography>
 
-                    <Button variant="contained" color="inherit">
-                        Tạo kế hoạch mua sắm
+                    <Button variant="contained"
+                        color='success'
+                        sx={{ backgroundColor: 'rgb(0, 167, 111)', color: '#fff' }}
+                        startIcon={<Iconify icon="eva:plus-fill" />}
+                    // onClick={handleOpenCreateDeparment}
+                    >
+                        Tạo mới kế hoạch mua sắm
                     </Button>
                 </Stack>
                 <Card>
                     <Tabs value={activeTab} onChange={handleTabChange} aria-label="Product status tabs">
-                        <Tab label="Tất cả" value="1" />
-                        <Tab label="Chưa duyệt" value="2" />
-                        <Tab label="Đã duyệt" value="3" />
-                        <Tab label="Đã hoàn thành" value="4" />
+                        <Tab label="Tất cả" value="" />
+                        <Tab label="Chưa duyệt" value="No" />
+                        <Tab label="Đã duyệt" value="Yes" />
+                        <Tab label="Đã hoàn thành" value="Oke" />
                     </Tabs>
                     <Box sx={{ height: 540, width: '100%' }}>
                         <DataGrid
                             rows={plans}
                             columns={columns}
-                            slots={{
-                                pagination: CustomPagination,
-                            }}
                             paginationModel={paginationModel}
                             onPaginationModelChange={setPaginationModel}
                             pageSizeOptions={[10, 20, 50]}
+                            rowCount={totalPlans}
+                            slots={{
+                                loadingOverlay: LinearProgress,
+                            }}
+                            loading={loading}
+                            paginationMode='server'
                         />
                     </Box>
 
                 </Card>
             </Container>
-            {/* <Popover
-                open={Boolean(open)}
+            <Popover
+                open={!!open}
                 anchorEl={open}
                 onClose={handleCloseMenu}
-                anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'left' }}
                 PaperProps={{
-                    sx: {
-                        p: 1,
-                        width: 140,
-                        '& .MuiMenuItem-root': {
-                            px: 1,
-                            typography: 'body2',
-                            borderRadius: 0.75,
-                        },
-                    },
+                    sx: { width: 140 },
                 }}
             >
-                <MenuItem>
-                    <Icon icon={'eva:edit-fill'} />
-                    Edit
+                <MenuItem >
+                    <Iconify icon="eva:eye-outline" sx={{ marginRight: 2 }} />
+                    Xem
                 </MenuItem>
+                <MenuItem onClick={handleOpenModalEdit}>
+                    <Iconify icon="eva:checkmark-outline" sx={{ marginRight: 2 }} />
+                    Đồng ý
+                </MenuItem>
+                <MenuItem onClick={handleOpenModalReject} sx={{ color: 'error.main' }}>
+                    <Iconify icon="eva:trash-2-outline" sx={{ marginRight: 2 }} />
+                    Từ chối
+                </MenuItem>
+                {/* <Modal
+                    open={openModal}
+                    onClose={handleClose}
+                    aria-labelledby="modal-modal-title"
+                    aria-describedby="modal-modal-description"
 
-                <MenuItem>
-                    <Icon icon={'eva:edit-fill'} />
-                    Edit
-                </MenuItem>
-            </Popover> */}
+                >
+                    <Box sx={style}>
+                        <Typography id="modal-modal-title" variant="h6" component="h2">
+                            Bạn có chắc chắn muốn xoá phòng ban <strong>{departmentName}</strong> không ?
+                        </Typography>
+                        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+                            <Button onClick={handleClose} sx={{ mr: 2 }} >
+                                Đóng
+                            </Button>
+
+                            <Button onClick={handleSubmit} variant="contained" color="error">
+                                Xác nhận
+                            </Button>
+                        </Box>
+                    </Box>
+                </Modal> */}
+            </Popover>
         </BaseLayout>
 
     );

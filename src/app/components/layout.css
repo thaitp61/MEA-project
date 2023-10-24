@@ -17,4 +17,8 @@
   .notification-time.marked {
     color: teal;
   }
-  
+.title-text {
+  text-align: center;
+  font-weight: bold;
+  color: rgb(0, 167, 111);
+}

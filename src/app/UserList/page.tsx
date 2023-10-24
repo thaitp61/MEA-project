@@ -8,7 +8,7 @@ import {
     GridPagination,
 } from '@mui/x-data-grid';
 import BaseLayout from '../components/BaseLayout';
-import { Button, Card, Checkbox, Container, IconButton, MenuItem, Paper, Popover, Stack, Tab, TableBody, TableCell, TableRow, Tabs, Typography } from '@mui/material';
+import { Button, Card, Checkbox, Container, IconButton, LinearProgress, MenuItem, Paper, Popover, Stack, Tab, TableBody, TableCell, TableRow, Tabs, Typography } from '@mui/material';
 import { Icon } from '@iconify/react';
 import axios from 'axios'
 import useSWR from "swr";
@@ -21,6 +21,9 @@ import { toast } from 'react-hot-toast';
 import ApiContext from '../context/ApiContext';
 import MuiPagination from '@mui/material/Pagination';
 import { TablePaginationProps } from '@mui/material/TablePagination';
+import Iconify from '../components/iconify';
+import { FilterComparator, SortOrder } from '../models/common';
+import UpdateModal from '../components/user.update.modal';
 
 function Pagination({
     page,
@@ -95,31 +98,13 @@ export default function UserList() {
         },
         {
             field: 'startWorkDate',
-            headerName: 'Ngày làm việc',
+            headerName: 'Ngày bắt đầu',
             width: 150,
             valueGetter: (params) => {
-                const startImportDateValue = params.row.startImportDate;
+                const startWorkDateValue = params.row.startWorkDate;
 
-                if (startImportDateValue) {
-                    const dateObject = new Date(startImportDateValue);
-                    const day = dateObject.getUTCDate();
-                    const month = dateObject.getUTCMonth() + 1;
-                    const year = dateObject.getUTCFullYear();
-                    return `${day}/${month}/${year}`;
-                }
-
-                return ''; // Handle the case where 'endImportDate' is not defined or falsy
-            },
-        },
-        {
-            field: 'endImportDate',
-            headerName: 'Ngày kết thúc',
-            width: 150,
-            valueGetter: (params) => {
-                const endImportDateValue = params.row.endImportDate;
-
-                if (endImportDateValue) {
-                    const dateObject = new Date(endImportDateValue);
+                if (startWorkDateValue) {
+                    const dateObject = new Date(startWorkDateValue);
                     const day = dateObject.getUTCDate();
                     const month = dateObject.getUTCMonth() + 1;
                     const year = dateObject.getUTCFullYear();
@@ -137,12 +122,9 @@ export default function UserList() {
             cellClassName: "actions",
             renderCell: (params) => (
                 <div>
-                    <GridActionsCellItem
-                        icon={<BlockIcon />}
-                        label="Delete"
-                        color="inherit"
-                        onClick={() => handleDeleteUser(params.row?.id)}
-                    />
+                    <IconButton onClick={handleOpenMenu(params.row?.id, params.row?.name)}>
+                        <Icon icon="eva:more-vertical-fill" />
+                    </IconButton>
                 </div>
             ),
         }
@@ -151,28 +133,49 @@ export default function UserList() {
     const [page, setPage] = useState(0);
     const [pageSize, setPageSize] = useState(10);
     const [totalUsers, setTotalUsers] = useState(0);
+    const [userID, setUserID] = useState<string>("");
+    const [userName, setUserName] = useState<string>("");
+    const [open, setOpen] = React.useState(null);
+    const [openModal, setOpenModal] = useState<boolean>(false);
+    const [loading, setLoading] = useState(true);
+    const [paginationModel, setPaginationModel] = React.useState({
+        page: 0,
+        pageSize: 10,
+    });
+    const [openEditModal, setOpenEditModal] = useState(false);
+    const [userDetail, setUserDetail] = useState<IUser | null>(null)
+    const [departmentList, setDepartmentList] = useState<IDepartment[]>([]);
+    const handleOpen = () => setOpenModal(true);
+    const handleClose = () => {
+        setOpenModal(false)
+        setOpen(null)
+    };
+
 
     const getUser = async () => {
         try {
             const response = await ApiContext.get('/user',
                 {
                     params: {
-                        page: 0,
-                        pageSize: 50,
+                        page: paginationModel?.page,
+                        pageSize: paginationModel?.pageSize,
+                        orderBy: [`updatedAt||${SortOrder.DESC}`],
                     },
                 });
             const totalUsers = response?.data?.count
             setTotalUsers(totalUsers)
             const userList = response?.data?.data; // Danh sách người dùng từ API
             setUsers(userList);
-            // setPlans(planList);
+            setLoading(false); // Tắt trạng thái loading khi dữ liệu đã được tải
+
         } catch (error) {
             console.error('Lỗi khi gọi API:', error);
         }
     };
     useEffect(() => {
         getUser();
-    }, [page, pageSize]);
+        setLoading(true);
+    }, [paginationModel]);
     const DeleteUser = async (userID: string) => {
         try {
             const response = await ApiContext.delete(`https://mea.monoinfinity.net/api/v1/user/${userID}`);
@@ -190,58 +193,119 @@ export default function UserList() {
         console.log("reject PlanID:", userID)
     }
 
-    const [open, setOpen] = React.useState(null);
 
     const [activeTab, setActiveTab] = React.useState('');
     const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
         setActiveTab(newValue);
     };
+    //page size
+    const handleOpenMenu = (userID: string, userName: string) => (event: any) => {
+        setOpen(event.currentTarget);
+        setUserID(userID);
+        setUserName(userName);
+    };
     const handleCloseMenu = () => {
         setOpen(null);
     };
-    const handleOpenMenu = (event: any) => {
-        setOpen(event.currentTarget);
+
+    const GetUserDetail = async (userID: string) => {
+        try {
+            const response = await ApiContext.get(`/user/${userID}`);
+            const userDetail = response?.data
+            setUserDetail(userDetail)
+        } catch (error) {
+            console.error('API Error:', error);
+        }
+    }
+    const getDepartment = async () => {
+        try {
+            const response = await ApiContext.get('/department',
+                {
+                    params: {
+                        page: 0,
+                        pageSize: 100,
+                        filters: [`status||${FilterComparator.EQUAL}||ACTIVE`], // Sử dụng statusFilter nếu nó có giá trị
+
+                    },
+                });
+            const departmentList = response?.data?.data; // Danh sách người dùng từ API
+            setDepartmentList(departmentList);
+        } catch (error) {
+            console.error('Lỗi khi gọi API:', error);
+        }
     };
-    //page size
-    const [paginationModel, setPaginationModel] = React.useState({
-        pageSize: pageSize,
-        page: page,
-    });
+    const handleOpenModalEdit = () => {
+        setOpenEditModal(true);
+        GetUserDetail(userID);
+        getDepartment();
+    };
 
-
+    /// menu action
 
     return (
         <BaseLayout>
             <Container maxWidth={false}>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
                     <Typography variant="h4">Danh sách nhân viên</Typography>
-
-                    <Button variant="contained" color="inherit">
+                    <Button variant="contained"
+                        color='success'
+                        sx={{ backgroundColor: 'rgb(0, 167, 111)', color: '#fff' }}
+                        startIcon={<Iconify icon="eva:plus-fill" />}
+                    // onClick={handleOpenCreateDeparment}
+                    >
                         Tạo mới nhân viên
                     </Button>
                 </Stack>
                 <Card>
                     <Tabs value={activeTab} onChange={handleTabChange} aria-label="Product status tabs">
-                        <Tab label="Tất cả" value="1" />
-                        <Tab label="Chưa duyệt" value="2" />
-                        <Tab label="Đã duyệt" value="3" />
-                        <Tab label="Đã hoàn thành" value="4" />
+                        <Tab label="Tất cả" value="" />
+                        <Tab label="Không hoạt động" value="Ban" />
                     </Tabs>
                     <Box sx={{ height: 540, width: '100%' }}>
                         <DataGrid
                             rows={users}
                             columns={columns}
-                            slots={{
-                                pagination: CustomPagination,
-                            }}
                             paginationModel={paginationModel}
                             onPaginationModelChange={setPaginationModel}
                             pageSizeOptions={[10, 20, 50]}
-
+                            rowCount={totalUsers}
+                            slots={{
+                                loadingOverlay: LinearProgress,
+                            }}
+                            loading={loading}
+                            paginationMode='server'
                         />
                     </Box>
                 </Card>
+                <Popover
+                    open={!!open}
+                    anchorEl={open}
+                    onClose={handleCloseMenu}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+                    PaperProps={{
+                        sx: { width: 140 },
+                    }}
+                >
+                    <MenuItem onClick={handleOpenModalEdit}>
+                        <Iconify icon="eva:eye-fill" sx={{ marginRight: 2 }} />
+                        Xem
+                    </MenuItem>
+                    <MenuItem sx={{ color: 'error.main' }}>
+                        <Iconify icon="eva:trash-2-outline" sx={{ marginRight: 2 }} />
+                        Khoá
+                    </MenuItem>
+                </Popover>
             </Container>
+            <UpdateModal
+                showModalUpdate={openEditModal}
+                setShowModalUpdate={setOpenEditModal}
+                user={userDetail}
+                setUser={setUserDetail}
+                setOpen={setOpen}
+                getUser={getUser}
+                departmentList={departmentList}
+            />
         </BaseLayout>
 
     );

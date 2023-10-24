@@ -4,7 +4,7 @@ import BaseLayout from './components/BaseLayout'
 export default function Home() {
   return (
     <BaseLayout>
-      <h1>hello</h1>
+      <h1>Trang chủ</h1>
     </BaseLayout>
   )
 }

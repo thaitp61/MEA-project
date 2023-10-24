@@ -21,6 +21,7 @@ import { toast } from 'react-hot-toast';
 import ApiContext from '../context/ApiContext';
 import MuiPagination from '@mui/material/Pagination';
 import { TablePaginationProps } from '@mui/material/TablePagination';
+import Iconify from '../components/iconify';
 
 function Pagination({
     page,
@@ -250,8 +251,12 @@ export default function EquipmentList() {
             <Container maxWidth={false}>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
                     <Typography variant="h4">Danh sách thiết bị y tế</Typography>
-
-                    <Button variant="contained" color="inherit">
+                    <Button variant="contained"
+                        color='success'
+                        sx={{ backgroundColor: 'rgb(0, 167, 111)', color: '#fff' }}
+                        startIcon={<Iconify icon="eva:plus-fill" />}
+                    // onClick={handleOpenCreateDeparment}
+                    >
                         Tạo mới thiết bị
                     </Button>
                 </Stack>

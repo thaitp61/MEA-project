@@ -24,7 +24,9 @@ import { TablePaginationProps } from '@mui/material/TablePagination';
 import Iconify from '../components/iconify';
 import { CiKeyboard } from 'react-icons/ci';
 import "./layout.css"
-import { FilterComparator } from '../models/common';
+import { FilterComparator, SortOrder } from '../models/common';
+import UpdateModal from '../components/deparment.update.modal';
+
 const style = {
     position: 'absolute',
     top: '50%',
@@ -46,16 +48,7 @@ interface Department {
     description: string;
     status: string;
 }
-interface DepartmentInfor {
-    id: string;
-    createdAt: string;
-    updatedAt: string;
-    isDeleted: string;
-    isRequiredUpdate: string;
-    name: string;
-    description: string;
-    status: string;
-}
+
 export default function DepartmentList() {
 
     const columns: GridColDef[] = [
@@ -114,18 +107,9 @@ export default function DepartmentList() {
     const [departmentID, setDepartmentID] = useState<string>('');
     const [departmentName, setDepartmentName] = useState('');
     const [totalDeparment, setTotalDepartment] = useState(0);
-    const [openEditDeparment, setEditDeparment] = useState(false);
+    const [openEditDeparment, setOpenEditDeparment] = useState(false);
     const [openCreateDeparment, setCreateDeparment] = useState(false);
-    const [departmentInformation, setDepartmentInformation] = useState<DepartmentInfor>({
-        id: '',
-        createdAt: '',
-        updatedAt: '',
-        isDeleted: '',
-        isRequiredUpdate: '',
-        name: '',
-        description: '',
-        status: '',
-    });
+    const [departmentInformation, setDepartmentInformation] = useState<IDepartment | null>(null)
     const [departmentNameInfor, setDepartmentNameInfor] = useState<string>("");
     const [departmentNameCreate, setDepartmentNameCreate] = useState<string>("");
     const [deparmentDescriptionCreate, setDeparmentDescriptionCreate] = useState<string>("");
@@ -134,10 +118,12 @@ export default function DepartmentList() {
 
     const [open, setOpen] = React.useState(null);
     const [openModal, setOpenModal] = useState<boolean>(false);
-    const [value, setValue] = React.useState('');
 
     const handleOpen = () => setOpenModal(true);
-    const handleClose = () => setOpenModal(false);
+    const handleClose = () => {
+        setOpenModal(false)
+        setOpen(null)
+    };
     const [paginationModel, setPaginationModel] = React.useState({
         page: 0,
         pageSize: 10,
@@ -153,7 +139,8 @@ export default function DepartmentList() {
                         page: paginationModel?.page,
                         pageSize: paginationModel?.pageSize,
                         filters: statusFilter ? [`status||${FilterComparator.EQUAL}||${statusFilter}`] : [], // Sử dụng statusFilter nếu nó có giá trị
-                        orderBy: [],
+                        orderBy: [`updatedAt||${SortOrder.DESC}`],
+
                     },
                 });
             const departmentList = response?.data?.data; // Danh sách người dùng từ API
@@ -205,7 +192,7 @@ export default function DepartmentList() {
     }
 
     const handleOpenEditDeparment = () => {
-        setEditDeparment(true);
+        setOpenEditDeparment(true);
         GetInformationDepartment(departmentID)
     };
     const handleOpenCreateDeparment = () => {
@@ -215,7 +202,7 @@ export default function DepartmentList() {
     const handleCloseEditDepartment = () => {
         setDepartmentNameInfor("");
         setDeparmentDescription("");
-        setEditDeparment(false);
+        setOpenEditDeparment(false);
         setOpen(null);
     };
     const handleCloseCreateDepartment = () => {
@@ -229,33 +216,6 @@ export default function DepartmentList() {
         setOpen(null);
     };
 
-    // Cập nhật phòng ban
-    const handleUpdateDepartment = async () => {
-        if (!departmentNameInfor) {
-            toast.error("Không để trống tên phòng ban!")
-            return;
-        }
-        if (!deparmentDescription) {
-            toast.error("Không để trống mô tả phòng ban")
-            return;
-        }
-        try {
-            const response = await ApiContext.put(`/department/${departmentID}`, {
-                name: departmentNameInfor,
-                description: deparmentDescription,
-            });
-            if (response.status === 200) {
-                getDepartment();
-                toast.success("Cập nhật thành công");
-                // Thực hiện các hành động khác sau khi cập nhật thành công
-            }
-        } catch (error) {
-            toast.error("Cập nhật thất bại");
-            console.error("Lỗi khi gọi API:", error);
-            // Xử lý lỗi khi gọi API
-        }
-        handleCloseEditDepartment();
-    };
     const handleCreateDepartment = async () => {
         if (!departmentNameCreate) {
             toast.error("Không để trống tên phòng ban!")
@@ -270,7 +230,7 @@ export default function DepartmentList() {
                 name: departmentNameCreate,
                 description: deparmentDescriptionCreate,
             });
-            if (response.status === 200) {
+            if (response.status === 201 || response.status === 200) {
                 getDepartment();
                 toast.success("Cập nhật thành công");
                 // Thực hiện các hành động khác sau khi cập nhật thành công
@@ -281,18 +241,6 @@ export default function DepartmentList() {
         }
         handleCloseCreateDepartment();
     };
-    // ---------------------------------
-    // const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
-    //     setValue(newValue);
-    //     // Gọi lại API getNotificationList với các tham số tương ứng
-    //     if (newValue === 'UNREAD') {
-    //         getNotificationList(`status||${FilterComparator.EQUAL}||UNREAD`);
-    //     } else {
-    //         getNotificationList('');
-    //     }
-    // };
-
-
 
     const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
         // Cập nhật trạng thái statusFilter dựa trên tab được chọn
@@ -413,95 +361,6 @@ export default function DepartmentList() {
                         <Iconify icon="eva:edit-fill" sx={{ marginRight: 2 }} />
                         Sửa
                     </MenuItem>
-                    <Dialog
-                        open={openEditDeparment}
-                        onClose={handleCloseEditDepartment}
-                        scroll='paper'
-                        aria-labelledby="scroll-dialog-title"
-                        aria-describedby="scroll-dialog-description"
-                        fullWidth
-                        maxWidth='md'
-                    >
-                        <DialogTitle className="title-text" id="scroll-dialog-title">CHỈNH SỬA PHÒNG BAN</DialogTitle>
-                        <DialogContent sx={{ color: "rgb(0, 167, 111)" }} dividers>
-                            <DialogTitle>Chi tiết phòng ban</DialogTitle>
-                            <Grid container spacing={2}>
-                                <Grid item xs={6}>
-                                    <Stack spacing={2} margin={2}>
-                                        <TextField variant="outlined"
-                                            id="deparmentID"
-                                            label="Mã phòng ban"
-                                            defaultValue={departmentInformation?.id}
-                                            InputProps={{
-                                                readOnly: true,
-                                            }}
-                                            InputLabelProps={{
-                                                shrink: true,
-                                            }}
-                                        />
-                                        <TextField
-                                            variant="outlined"
-                                            label="Ngày tạo"
-                                            defaultValue={departmentInformation?.createdAt}
-                                            InputProps={{
-                                                readOnly: true,
-                                            }}
-                                            InputLabelProps={{
-                                                shrink: true,
-                                            }}
-                                        />
-                                    </Stack>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Stack spacing={2} margin={2}>
-                                        <TextField
-                                            variant="outlined"
-                                            label="Tên phòng ban"
-                                            InputLabelProps={{
-                                                shrink: true,
-                                            }}
-                                            defaultValue={departmentName}
-                                            onChange={(e) => setDepartmentNameInfor(e.target.value)}
-                                        />
-                                        <TextField
-                                            variant="outlined"
-                                            label="Ngày cập nhật gần đây"
-                                            InputProps={{
-                                                readOnly: true,
-                                            }}
-                                            InputLabelProps={{
-                                                shrink: true,
-                                            }}
-                                            defaultValue={departmentInformation?.updatedAt} />
-                                    </Stack>
-                                </Grid>
-                            </Grid>
-                            <Stack spacing={2} margin={2}>
-                                <TextField
-                                    label="Mô tả"
-                                    multiline
-                                    rows={4}
-                                    InputLabelProps={{
-                                        shrink: true,
-                                    }}
-                                    defaultValue={departmentInformation?.description}
-                                    onChange={(e) => setDeparmentDescription(e.target.value)}
-                                />
-                            </Stack>
-                        </DialogContent>
-                        <DialogActions>
-                            <Button
-                                sx={{ color: 'rgb(0, 167, 111)' }}
-                                onClick={handleCloseEditDepartment}
-                            >Huỷ</Button>
-                            <Button
-                                variant="contained"
-                                color='success'
-                                sx={{ backgroundColor: 'rgb(0, 167, 111)', color: '#fff' }}
-                                onClick={handleUpdateDepartment}
-                            >Xác nhận</Button>
-                        </DialogActions>
-                    </Dialog>
                     <MenuItem onClick={handleOpen} sx={{ color: 'error.main' }}>
                         <Iconify icon="eva:trash-2-outline" sx={{ marginRight: 2 }} />
                         Xoá
@@ -530,6 +389,14 @@ export default function DepartmentList() {
                     </Modal>
                 </Popover>
             </Container>
+            <UpdateModal
+                showModalUpdate={openEditDeparment}
+                setShowModalUpdate={setOpenEditDeparment}
+                department={departmentInformation}
+                setDeparments={setDepartmentInformation}
+                setOpen={setOpen}
+                getDepartment={getDepartment}
+            />
         </BaseLayout>
 
     );

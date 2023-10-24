@@ -13,6 +13,7 @@ import ApiContext from '../context/ApiContext';
 import React, { useState, useEffect } from 'react';
 import { Container, Tabs, Typography } from '@mui/material';
 import { FilterComparator, SortOrder } from '../models/common';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
 interface Notification {
     id: string;
@@ -48,50 +49,71 @@ function formatTimeAgo(createdAt: string) {
 }
 
 export default function Notification() {
-    const [value, setValue] = React.useState('');
+    const [value, setValue] = React.useState<string>('');
+    const [loading, setLoading] = useState<boolean>(false);
+    const [totalNotification, setTotalNotification] = useState<number>(0)
+    const [page, setPage] = useState<number>(0)
+    const [hasMore, setHasMore] = useState(true);
+
     const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
-        setValue(newValue);
-        // Gọi lại API getNotificationList với các tham số tương ứng
+        // Cập nhật trạng thái statusFilter dựa trên tab được chọn
         if (newValue === 'UNREAD') {
-            getNotificationList(`status||${FilterComparator.EQUAL}||UNREAD`);
+            setValue('UNREAD');
         } else {
-            getNotificationList('');
+            setValue(''); // Trạng thái khác
         }
     };
-
+    console.log("value", value)
+    console.log("page", page)
     const [notifications, setNotifications] = useState<Notification[]>([]);
-    const getNotificationList = async (filters: any) => {
+    const getNotificationList = async () => {
         try {
             const response = await ApiContext.get('/user-me-notification',
                 {
                     params: {
-                        page: 0,
-                        pageSize: 50,
-                        filters: filters ? [filters] : [],
+                        page: page,
+                        pageSize: 10,
+                        filters: value ? [`status||${FilterComparator.EQUAL}||${value}`] : [], // Sử dụng statusFilter nếu nó có giá trị
+                        orderBy: [`createdAt||${SortOrder.DESC}`],
                     },
                 });
-            const notificationList = response?.data?.data; // Danh sách người dùng từ API
-            setNotifications(notificationList);
-            // setPlans(planList);
+            const notificationList = response.data.data; // Danh sách người dùng từ API
+            const total = response.data.count
+            setNotifications(prevNotifications => [...prevNotifications, ...notificationList])
+            setPage(prevPage => prevPage + 1);
         } catch (error) {
             console.error('Lỗi khi gọi API:', error);
         }
     };
     useEffect(() => {
-        getNotificationList([]);
-    }, []);
+        getNotificationList();
+    }, [value]);
+
+    // const fetchData = () => {
+    //     setPage(page + 1);
+    //     const getNotificationList = async () => {
+    //         try {
+    //             const response = await ApiContext.get('/user-me-notification',
+    //                 {
+    //                     params: {
+    //                         page: page,
+    //                         pageSize: 10,
+    //                         filters: value ? [`status||${FilterComparator.EQUAL}||${value}`] : [], // Sử dụng statusFilter nếu nó có giá trị
+    //                         orderBy: [`createdAt||${SortOrder.DESC}`],
+    //                     },
+    //                 });
+    //             const total = response?.data?.count
+    //             setTotalNotification(total);
+    //             setNotifications(notifications.concat(response.data.data));
+    //             // setPlans(planList);
+    //         } catch (error) {
+    //             console.error('Lỗi khi gọi API:', error);
+    //         }
+    //     };
+    //     getNotificationList();
+    // }
 
     const [open, setOpen] = React.useState(true);
-
-
-
-    const handleClick = () => {
-        setOpen(!open);
-    };
-
-    const handleChange = (event: React.SyntheticEvent, newValue: string) => {
-        setValue(newValue);
-    };
 
 
     return (
@@ -116,35 +138,48 @@ export default function Notification() {
                             <Tab value="UNREAD" label="Chưa đọc" />
                         </Tabs>
                     </Box>
-                    {notifications.map((notification, index) => (
-                        <ListItemButton key={index} >
-                            <ListItemIcon>
-                                <HandymanIcon />
-                            </ListItemIcon>
-                            <ListItemText
-                                primary={
-                                    <Typography
-                                        variant="body1"
-                                        sx={{
-                                            color: notification?.status === 'UNREAD' ? 'bold' : '#b0b3b8',
-                                        }}
-                                    >
-                                        {notification?.content}
-                                    </Typography>
-                                }
-                                secondary={
-                                    <Typography
-                                        variant="body2"
-                                        sx={{
-                                            color: notification?.status === 'UNREAD' ? '#0866ff' : '#b0b3b8',
-                                        }}
-                                    >
-                                        {formatTimeAgo(notification?.createdAt)}
-                                    </Typography>
-                                }
-                            />
-                        </ListItemButton>
-                    ))}
+                    <InfiniteScroll
+                        dataLength={notifications.length}
+                        next={getNotificationList}
+                        hasMore={true} // Thay đổi thành logic kiểm tra xem còn thông báo nào khác để tải hay không
+                        loader={<h4>Loading...</h4>}
+                        endMessage={
+                            <p style={{ textAlign: 'center' }}>
+                                <b>Đã hết thông báo</b>
+                            </p>
+                        }
+                    >
+                        {notifications.map((notification, index) => (
+                            <ListItemButton key={index} >
+                                <ListItemIcon>
+                                    <HandymanIcon />
+                                </ListItemIcon>
+                                <ListItemText
+                                    primary={
+                                        <Typography
+                                            variant="body1"
+                                            sx={{
+                                                color: notification.status === 'UNREAD' ? 'bold' : '#b0b3b8',
+                                            }}
+                                        >
+                                            {notification.content}
+                                        </Typography>
+                                    }
+                                    secondary={
+                                        <Typography
+                                            variant="body2"
+                                            sx={{
+                                                color: notification.status === 'UNREAD' ? '#0866ff' : '#b0b3b8',
+                                            }}
+                                        >
+                                            {formatTimeAgo(notification.createdAt)}
+                                        </Typography>
+                                    }
+                                />
+                            </ListItemButton>
+                        ))}
+                    </InfiniteScroll>
+
                 </Box>
 
             </List>
