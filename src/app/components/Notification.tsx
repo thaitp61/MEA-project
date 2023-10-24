@@ -10,8 +10,8 @@ import Tab from '@mui/material/Tab';
 import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import ApiContext from '../context/ApiContext';
-import React, { useState, useEffect } from 'react';
-import { Container, Tabs, Typography } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import { CircularProgress, Container, LinearProgress, Tabs, Typography } from '@mui/material';
 import { FilterComparator, SortOrder } from '../models/common';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
@@ -55,6 +55,42 @@ export default function Notification() {
     const [page, setPage] = useState<number>(0)
     const [hasMore, setHasMore] = useState(true);
 
+
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const isMounted = useRef(false);
+
+    const getNotificationList = async () => {
+        // setPage(page + 1);
+        console.log(page)
+        try {
+            const response = await ApiContext.get('/user-me-notification', {
+                params: {
+                    page: page,
+                    pageSize: 12,
+                    filters: value ? [`status||${FilterComparator.EQUAL}||${value}`] : [], // Sử dụng statusFilter nếu nó có giá trị
+                    orderBy: [`createdAt||${SortOrder.DESC}`],
+                },
+            });
+            const notificationList = response.data.data;
+            const total = response.data.count;
+            setNotifications((prevNotifications) => [...prevNotifications, ...notificationList]);
+            setPage((prevPage) => prevPage + 1);
+            setTotalNotification(total);
+            if (notificationList.length === 0) {
+                setHasMore(false);
+            }
+        } catch (error) {
+            console.error('Lỗi khi gọi API:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (!isMounted.current) {
+            isMounted.current = true;
+            getNotificationList();
+        }
+    }, [value]);
+    console.log("value", value)
     const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
         // Cập nhật trạng thái statusFilter dựa trên tab được chọn
         if (newValue === 'UNREAD') {
@@ -63,34 +99,10 @@ export default function Notification() {
             setValue(''); // Trạng thái khác
         }
     };
-    console.log("value", value)
-    console.log("page", page)
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const getNotificationList = async () => {
-        try {
-            const response = await ApiContext.get('/user-me-notification',
-                {
-                    params: {
-                        page: page,
-                        pageSize: 10,
-                        filters: value ? [`status||${FilterComparator.EQUAL}||${value}`] : [], // Sử dụng statusFilter nếu nó có giá trị
-                        orderBy: [`createdAt||${SortOrder.DESC}`],
-                    },
-                });
-            const notificationList = response.data.data; // Danh sách người dùng từ API
-            const total = response.data.count
-            setNotifications(prevNotifications => [...prevNotifications, ...notificationList])
-            setPage(prevPage => prevPage + 1);
-        } catch (error) {
-            console.error('Lỗi khi gọi API:', error);
-        }
-    };
-    useEffect(() => {
-        getNotificationList();
-    }, [value]);
 
     // const fetchData = () => {
     //     setPage(page + 1);
+    //     console.log(page)
     //     const getNotificationList = async () => {
     //         try {
     //             const response = await ApiContext.get('/user-me-notification',
@@ -119,11 +131,13 @@ export default function Notification() {
     return (
         <Container maxWidth={false}>
             <List
-                sx={{ width: '100%', maxWidth: 1000, bgcolor: 'background.paper', margin: 'auto' }}
+                sx={{
+                    width: '100%', maxWidth: 1000, bgcolor: 'background.paper', margin: 'auto', overflowX: 'visible'
+                }}
                 component="nav"
                 aria-labelledby="nested-list-subheader"
                 subheader={
-                    <ListSubheader component="div" id="nested-list-subheader" sx={{ fontSize: '24px' }}>
+                    <ListSubheader component="div" id="nested-list-subheader" sx={{ fontSize: '24px', color: "rgb(0, 167, 111)" }}>
                         Thông báo
                     </ListSubheader>
                 }
@@ -141,12 +155,18 @@ export default function Notification() {
                     <InfiniteScroll
                         dataLength={notifications.length}
                         next={getNotificationList}
-                        hasMore={true} // Thay đổi thành logic kiểm tra xem còn thông báo nào khác để tải hay không
-                        loader={<h4>Loading...</h4>}
+                        hasMore={hasMore} // Thay đổi thành logic kiểm tra xem còn thông báo nào khác để tải hay không
+                        loader={
+                            <Box sx={{ width: '100%' }}>
+                                <LinearProgress />
+                            </Box>
+                        }
+                        height={650}
                         endMessage={
                             <p style={{ textAlign: 'center' }}>
                                 <b>Đã hết thông báo</b>
                             </p>
+
                         }
                     >
                         {notifications.map((notification, index) => (

@@ -160,8 +160,7 @@ const Sidebar: React.FC = () => {
 
     return (
         <div
-            className={`sidebar__wrapper ${isSidebarOpen ? "" : "sidebar__wrapper--collapsed"
-                }`}
+            className="sidebar__wrapper"
         >
             <aside className={`sidebar ${isSidebarOpen ? "" : "sidebar--collapsed"}`}>
                 <button className="btn" onClick={toggleSidebar}>
