@@ -260,7 +260,7 @@ export default function DepartmentList() {
         setDepartmentName(departmentName);
     };
     return (
-        <BaseLayout>
+        <>
             <Container maxWidth={false}>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
                     <Typography variant="h4">Danh sách phòng ban</Typography>
@@ -279,7 +279,7 @@ export default function DepartmentList() {
                         aria-labelledby="scroll-dialog-title"
                         aria-describedby="scroll-dialog-description"
                         fullWidth
-                        maxWidth='md'
+                        maxWidth='sm'
                     >
                         <DialogTitle className="title-text" id="scroll-dialog-title-create">TẠO MỚI PHÒNG BAN</DialogTitle>
                         <DialogContent sx={{ color: "rgb(0, 167, 111)" }} dividers>
@@ -397,7 +397,6 @@ export default function DepartmentList() {
                 setOpen={setOpen}
                 getDepartment={getDepartment}
             />
-        </BaseLayout>
-
+        </>
     );
 }

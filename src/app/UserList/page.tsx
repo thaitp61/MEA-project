@@ -24,6 +24,8 @@ import { TablePaginationProps } from '@mui/material/TablePagination';
 import Iconify from '../components/iconify';
 import { FilterComparator, SortOrder } from '../models/common';
 import UpdateModal from '../components/user.update.modal';
+import CreateModal from '../components/user.create.modal';
+import Link from 'next/link';
 
 function Pagination({
     page,
@@ -66,21 +68,16 @@ export default function UserList() {
         {
             field: 'name',
             headerName: 'Họ và tên',
-            width: 150,
+            width: 200,
         },
         {
             field: 'email',
             headerName: 'Địa chỉ Email',
-            width: 150,
+            width: 200,
         },
         {
             field: 'phone',
             headerName: 'Số điện thoại',
-            width: 150,
-        },
-        {
-            field: 'address',
-            headerName: 'Địa chỉ',
             width: 150,
         },
         {
@@ -92,7 +89,7 @@ export default function UserList() {
         {
             field: 'department',
             headerName: 'Phòng ban',
-            width: 150,
+            width: 120,
             valueGetter: (params) => params.row.department?.name
 
         },
@@ -117,8 +114,7 @@ export default function UserList() {
         {
             field: "actions",
             type: "actions",
-            headerName: "Chức năng",
-            width: 150,
+            width: 80,
             cellClassName: "actions",
             renderCell: (params) => (
                 <div>
@@ -130,13 +126,10 @@ export default function UserList() {
         }
     ];
     const [users, setUsers] = useState<User[]>([]);
-    const [page, setPage] = useState(0);
-    const [pageSize, setPageSize] = useState(10);
     const [totalUsers, setTotalUsers] = useState(0);
     const [userID, setUserID] = useState<string>("");
     const [userName, setUserName] = useState<string>("");
     const [open, setOpen] = React.useState(null);
-    const [openModal, setOpenModal] = useState<boolean>(false);
     const [loading, setLoading] = useState(true);
     const [paginationModel, setPaginationModel] = React.useState({
         page: 0,
@@ -145,11 +138,8 @@ export default function UserList() {
     const [openEditModal, setOpenEditModal] = useState(false);
     const [userDetail, setUserDetail] = useState<IUser | null>(null)
     const [departmentList, setDepartmentList] = useState<IDepartment[]>([]);
-    const handleOpen = () => setOpenModal(true);
-    const handleClose = () => {
-        setOpenModal(false)
-        setOpen(null)
-    };
+    const [openCreateModal, setOpenCreateModal] = useState(false);
+
 
 
     const getUser = async () => {
@@ -225,7 +215,7 @@ export default function UserList() {
                         page: 0,
                         pageSize: 100,
                         filters: [`status||${FilterComparator.EQUAL}||ACTIVE`], // Sử dụng statusFilter nếu nó có giá trị
-
+                        orderBy: [`createdAt||${SortOrder.DESC}`],
                     },
                 });
             const departmentList = response?.data?.data; // Danh sách người dùng từ API
@@ -235,15 +225,19 @@ export default function UserList() {
         }
     };
     const handleOpenModalEdit = () => {
-        setOpenEditModal(true);
-        GetUserDetail(userID);
+        // setOpenEditModal(true);
+        // GetUserDetail(userID);
         getDepartment();
     };
+    const handleOpenModalCreate = () => {
+        setOpenCreateModal(true);
+        getDepartment();
+    }
 
     /// menu action
 
     return (
-        <BaseLayout>
+        <>
             <Container maxWidth={false}>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
                     <Typography variant="h4">Danh sách nhân viên</Typography>
@@ -251,7 +245,7 @@ export default function UserList() {
                         color='success'
                         sx={{ backgroundColor: 'rgb(0, 167, 111)', color: '#fff' }}
                         startIcon={<Iconify icon="eva:plus-fill" />}
-                    // onClick={handleOpenCreateDeparment}
+                        onClick={handleOpenModalCreate}
                     >
                         Tạo mới nhân viên
                     </Button>
@@ -287,9 +281,16 @@ export default function UserList() {
                         sx: { width: 140 },
                     }}
                 >
-                    <MenuItem onClick={handleOpenModalEdit}>
+                    <MenuItem sx={{ color: '#1976d2' }}>
                         <Iconify icon="eva:eye-fill" sx={{ marginRight: 2 }} />
-                        Xem
+                        <Link href={`/UserList/${userID}`} passHref
+                            style={{
+                                textDecoration: 'none',
+                                color: '#1976d2',
+                            }}
+                        >
+                            Chi tiết
+                        </Link>
                     </MenuItem>
                     <MenuItem sx={{ color: 'error.main' }}>
                         <Iconify icon="eva:trash-2-outline" sx={{ marginRight: 2 }} />
@@ -297,7 +298,7 @@ export default function UserList() {
                     </MenuItem>
                 </Popover>
             </Container>
-            <UpdateModal
+            {/* <UpdateModal
                 showModalUpdate={openEditModal}
                 setShowModalUpdate={setOpenEditModal}
                 user={userDetail}
@@ -305,8 +306,14 @@ export default function UserList() {
                 setOpen={setOpen}
                 getUser={getUser}
                 departmentList={departmentList}
+            /> */}
+            <CreateModal
+                showModalCreate={openCreateModal}
+                setShowModalCreate={setOpenCreateModal}
+                departmentList={departmentList}
+                getUser={getUser}
             />
-        </BaseLayout>
+        </>
 
     );
 }
