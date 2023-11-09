@@ -86,6 +86,40 @@ export default function DepartmentList() {
             field: 'status',
             headerName: 'Trạng thái',
             width: 150,
+            renderCell: (params) => {
+                const { value } = params;
+                if (value === 'ACTIVE') {
+                    return (
+                        <Box
+                            component="div"
+                            sx={{
+                                display: 'inline',
+                                p: 1,
+                                m: 1,
+                                bgcolor: 'rgb(0, 167, 111);',
+                                color: '#fff',
+                                border: '1px solid',
+                                borderColor: (theme) =>
+                                    theme.palette.mode === 'dark' ? 'grey.800' : 'grey.300',
+                                borderRadius: "12px",
+                                fontSize: '0.8rem',
+                                fontWeight: 600,
+                                width: '90px'
+                            }}
+                        >
+                            HOẠT ĐỘNG
+                        </Box>
+                    );
+                } else if (value === 'INACTIVE') {
+                    return (
+                        <Button variant="contained" color="error" style={{ width: '90px' }}>
+                            DỪNG
+                        </Button>
+                    );
+                }
+
+                return value;
+            },
         },
         {
             field: "actions",

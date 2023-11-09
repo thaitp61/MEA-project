@@ -21,18 +21,6 @@ import logo from '@/image/logo.png';
 import Image from 'next/image';
 import axios from "axios";
 
-function Copyright(props: any) {
-    return (
-        <Typography variant="body2" color="text.secondary" align="center" {...props}>
-            {'Copyright © '}
-            <Link color="inherit" href="https://mui.com/">
-                Your Website
-            </Link>{' '}
-            {new Date().getFullYear()}
-            {'.'}
-        </Typography>
-    );
-}
 
 // TODO remove, this demo shouldn't need to reset the theme.
 const defaultTheme = createTheme();
@@ -43,6 +31,14 @@ const LoginPage = () => {
     const router = useRouter()
 
     const handleLogin = async (e: React.FormEvent) => {
+        if (!username) {
+            toast.error("Không để trống tài khoản!")
+            return;
+        }
+        if (!password) {
+            toast.error("Không để trống mật khẩu")
+            return;
+        }
         e.preventDefault();
         try {
             const loginResponse = await axios.post(
@@ -105,7 +101,7 @@ const LoginPage = () => {
                         alt="logo"
                     />
                     <Typography component="h1" variant="h5">
-                        Sign in
+                        Đăng nhập
                     </Typography>
                     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
                         <TextField
@@ -113,28 +109,30 @@ const LoginPage = () => {
                             required
                             fullWidth
                             id="email"
-                            label="Email Address"
+                            label="Tài khoản"
                             name="email"
                             autoComplete="email"
                             autoFocus
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
+
                         />
                         <TextField
                             margin="normal"
                             required
                             fullWidth
                             name="password"
-                            label="Password"
+                            label="Mật khẩu"
                             type="password"
                             id="password"
                             autoComplete="current-password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+
                         />
                         <FormControlLabel
                             control={<Checkbox value="remember" color="primary" />}
-                            label="Remember me"
+                            label="Lưu mật khẩu"
                         />
                         <Button
                             type="submit"
@@ -143,23 +141,18 @@ const LoginPage = () => {
                             sx={{ mt: 3, mb: 2 }}
                             onClick={handleLogin}
                         >
-                            Sign In
+                            Đăng nhập
                         </Button>
                         <Grid container>
                             <Grid item xs>
                                 <Link href="#" variant="body2">
-                                    Forgot password?
+                                    Quân mật khẩu?
                                 </Link>
                             </Grid>
-                            <Grid item>
-                                <Link href="#" variant="body2">
-                                    {"Don't have an account? Sign Up"}
-                                </Link>
-                            </Grid>
+
                         </Grid>
                     </Box>
                 </Box>
-                <Copyright sx={{ mt: 8, mb: 4 }} />
             </Container>
         </ThemeProvider>
     );

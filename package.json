@@ -36,6 +36,7 @@
     "stream-chat": "^8.13.1",
     "stream-chat-react": "^10.14.0",
     "swr": "^2.2.4",
-    "typescript": "5.2.2"
+    "typescript": "5.2.2",
+    "xlsx": "^0.18.5"
   }
 }

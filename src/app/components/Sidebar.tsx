@@ -60,7 +60,7 @@ const SidebarInformation: SidebarInformation[] = [
         Icon: BsMessenger,
     },
     {
-        href: '/QuanLyVatTu/ThietLap',
+        href: '/Setting',
         Icon: AiFillSetting,
     },
     {

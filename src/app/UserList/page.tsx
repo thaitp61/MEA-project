@@ -94,21 +94,42 @@ export default function UserList() {
 
         },
         {
-            field: 'startWorkDate',
-            headerName: 'Ngày bắt đầu',
-            width: 150,
-            valueGetter: (params) => {
-                const startWorkDateValue = params.row.startWorkDate;
-
-                if (startWorkDateValue) {
-                    const dateObject = new Date(startWorkDateValue);
-                    const day = dateObject.getUTCDate();
-                    const month = dateObject.getUTCMonth() + 1;
-                    const year = dateObject.getUTCFullYear();
-                    return `${day}/${month}/${year}`;
+            field: 'status',
+            headerName: 'Trạng thái',
+            width: 120,
+            renderCell: (params) => {
+                const { value } = params;
+                if (value === 'ACTIVE') {
+                    return (
+                        <Box
+                            component="div"
+                            sx={{
+                                display: 'inline',
+                                p: 1,
+                                m: 1,
+                                bgcolor: 'rgb(0, 167, 111);',
+                                color: '#fff',
+                                border: '1px solid',
+                                borderColor: (theme) =>
+                                    theme.palette.mode === 'dark' ? 'grey.800' : 'grey.300',
+                                borderRadius: "12px",
+                                fontSize: '0.8rem',
+                                fontWeight: 600,
+                                width: '90px'
+                            }}
+                        >
+                            HOẠT ĐỘNG
+                        </Box>
+                    );
+                } else if (value === 'INACTIVE') {
+                    return (
+                        <Button variant="contained" color="error" style={{ width: '90px' }}>
+                            DỪNG
+                        </Button>
+                    );
                 }
 
-                return ''; // Handle the case where 'endImportDate' is not defined or falsy
+                return value;
             },
         },
         {
@@ -198,15 +219,15 @@ export default function UserList() {
         setOpen(null);
     };
 
-    const GetUserDetail = async (userID: string) => {
-        try {
-            const response = await ApiContext.get(`/user/${userID}`);
-            const userDetail = response?.data
-            setUserDetail(userDetail)
-        } catch (error) {
-            console.error('API Error:', error);
-        }
-    }
+    // const GetUserDetail = async (userID: string) => {
+    //     try {
+    //         const response = await ApiContext.get(`/user/${userID}`);
+    //         const userDetail = response?.data
+    //         setUserDetail(userDetail)
+    //     } catch (error) {
+    //         console.error('API Error:', error);
+    //     }
+    // }
     const getDepartment = async () => {
         try {
             const response = await ApiContext.get('/department',

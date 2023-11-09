@@ -65,13 +65,7 @@ export default function UpdateUser(props: IProps) {
             setRole(user?.role?.name)
             setCitizenID(user?.citizenId)
             setBirthday(user?.birthday)
-            // const dateObject = new Date(user?.startWorkDate);
-            // // Trích xuất ngày, tháng và năm
-            // const day = dateObject.getUTCDate();
-            // const month = dateObject.getUTCMonth() + 1;
-            // const year = dateObject.getUTCFullYear();
-            // // Tạo chuỗi ngày/tháng/năm
-            // const formattedDate = `${day}/${month}/${year}`;
+           
             const formattedStartWork = formatDate(user?.startWorkDate);
             const formattedBirthday = formatDate(user?.birthday);
             setStartWork(formattedStartWork)
@@ -82,7 +76,6 @@ export default function UpdateUser(props: IProps) {
     const handleChange = (event: SelectChangeEvent) => {
         setDepartment(event.target.value as string);
     };
-    console.log("deparment", department)
 
     const handleCloseEditUser = () => {
         setShowModalUpdate(false);
