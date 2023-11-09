@@ -115,7 +115,7 @@ const LoginPage = () => {
                             autoFocus
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-
+                            focused
                         />
                         <TextField
                             margin="normal"
@@ -128,7 +128,7 @@ const LoginPage = () => {
                             autoComplete="current-password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-
+                            focused
                         />
                         <FormControlLabel
                             control={<Checkbox value="remember" color="primary" />}

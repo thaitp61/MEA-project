@@ -33,10 +33,10 @@ interface Supply {
     code: string,
     unit: string,
     imageUrls: void,
-
+    equipmentId: string,
 }
 interface SupplyId {
-    supplyId: string,
+    id: string,
     quantity: number
 }
 const top100Films = [
@@ -188,6 +188,7 @@ export default function CreateMaintenace(props: IProps) {
     const checkedIcon = <CheckBoxIcon fontSize="small" />;
     const [selectedSupply, setSelectedSupply] = useState<Supply[]>([]);
     const [quantityChanges, setQuantityChanges] = useState<SupplyId[]>([]);
+    const [name, setName] = useState<string>("")
     // const [options, setOptions] = useState([]);
     // const [searchSupplyCalled, setSearchSupplyCalled] = useState(false);
     useEffect(() => {
@@ -195,12 +196,6 @@ export default function CreateMaintenace(props: IProps) {
             const ids = equipments.map((equipment) => equipment.id);
             setEquipmentIds(ids);
         }
-        // const initialQuantityChanges = selectedSupply.map((row) => {
-        //     const existingQuantityChange = quantityChanges.find((item) => item.supplyId === row.id);
-        //     return existingQuantityChange || { supplyId: row.id, quantity: 1 };
-        // });
-        // setQuantityChanges(initialQuantityChanges);
-
         // if (!searchSupplyCalled) {
         //     const searchSupply = async () => {
         //         try {
@@ -223,6 +218,7 @@ export default function CreateMaintenace(props: IProps) {
     }, [equipments]);
 
 
+
     const handleCloseModal = () => {
         setStartAt("");
         setEquipmentIds([]);
@@ -233,52 +229,74 @@ export default function CreateMaintenace(props: IProps) {
         setShowModalCreate(false);
     };
     const handleCreateMaintenance = async () => {
-        if (!startAt) {
-            toast.error("Không để trống ngày bắt đầu")
-            return;
-        }
-        if (!endAt) {
-            toast.error("Không để trống ngày kết thúc")
-            return;
-        }
-        if (!description) {
-            toast.error("Không để trống nội dung công việc")
-            return;
-        }
-        if (!type) {
-            toast.error("Không để trống loại đơn")
-            return;
-        }
-        // try {
-        //     const response = await ApiContext.post(`/repair-report`, {
-        //         type: type,
-        //         description: description,
-        //         startAt: startAt,
-        //         endAt: endAt,
-        //         equipmentIds: equipmentIds,
-        //         replaceItems: quantityChanges
-        //     });
-        //     if (response.status === 201 || response.status === 200) {
-        //         toast.success("Cập nhật thành công");
-        //         // Thực hiện các hành động khác sau khi cập nhật thành công
-        //     }
-        // } catch (error) {
-        //     toast.error("Cập nhật thất bại");
-        //     // Xử lý lỗi khi gọi API
+        // if (!startAt) {
+        //     toast.error("Không để trống ngày bắt đầu")
+        //     return;
         // }
+        // if (!endAt) {
+        //     toast.error("Không để trống ngày kết thúc")
+        //     return;
+        // }
+        // if (!description) {
+        //     toast.error("Không để trống nội dung công việc")
+        //     return;
+        // }
+        // if (!type) {
+        //     toast.error("Không để trống loại đơn")
+        //     return;
+        // }
+        try {
+            console.log("id", selectedSupply)
+            const repairReportItems = equipmentIds.map((equipmentId) => {
+                const replaceItems = selectedSupply
+                    .filter((item) => item.equipmentId === equipmentId)
+                    .map((item) => ({
+                        quantity: quantityChanges.find((qItem) => qItem.id === item.id)?.quantity || 1,
+                        supplyId: item.id,
+                    }));
+
+                return {
+                    equipmentId: equipmentId,
+                    replaceItems: replaceItems,
+                    description: description,
+                    imageUrls: [],
+                    type: type,
+                    name: name,
+                };
+            });
+            console.log("submit", repairReportItems)
+            //     const response = await ApiContext.post('/repair-report', {
+            //         startAt: startAt,
+            //         endAt: endAt,
+            //         repairReportItems: repairReportItems,
+            //     });
+
+            //     if (response.status === 201 || response.status === 200) {
+            //         toast.success("Cập nhật thành công");
+            //         // Thực hiện các hành động khác sau khi cập nhật thành công
+            //     }
+        } catch (error) {
+            toast.error("Cập nhật thất bại");
+            // Xử lý lỗi khi gọi API
+        }
 
         handleCloseModal();
     };
 
-    const handleQuantityChange = (id: string, quantity: number,) => {
+    const handleQuantityChange = (id: string, newQuantity: number) => {
+        console.log("quanlity", quantityChanges)
         const updatedQuantityChanges = quantityChanges.map((item) => {
-            if (item.supplyId === id) {
-                return { ...item, quantity };
+            if (item.id === id) {
+                return {
+                    ...item,
+                    quantity: newQuantity,
+                };
             }
             return item;
         });
         setQuantityChanges(updatedQuantityChanges);
     };
+    console.log(quantityChanges)
     const handleChangeType = (event: any) => {
         setType(event.target.value);
     };
@@ -287,7 +305,14 @@ export default function CreateMaintenace(props: IProps) {
 
     const handleSelectionChange = (event: React.SyntheticEvent, newValue: any) => {
         setSelectedSupply(newValue);
+        const updatedQuantityChanges = newValue.map((item: any) => {
+            const existingQuantity = quantityChanges.find((qItem: any) => qItem.id === item.id);
+            const quantity = existingQuantity ? existingQuantity.quantity : 1;
+            return { id: item.id, quantity };
+        });
+        setQuantityChanges(updatedQuantityChanges);
     };
+    console.log("quantityChanges", quantityChanges)
 
     return (
         <Dialog
@@ -453,6 +478,8 @@ export default function CreateMaintenace(props: IProps) {
                                         <TextField
                                             multiline
                                             rows={2}
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
                                         />
                                     </FormControl>
                                 </Grid>
@@ -515,13 +542,13 @@ export default function CreateMaintenace(props: IProps) {
                                                         key={row.id}
                                                         sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                                                     >
-                                                        <TableCell align="left">{row?.code}</TableCell>
-                                                        <TableCell align="left">{row?.name}</TableCell>
-                                                        <TableCell align="left">{row?.unit}</TableCell>
-                                                        <TableCell align="left">
+                                                        <TableCell align="right">{row?.code}</TableCell>
+                                                        <TableCell align="right">{row?.name}</TableCell>
+                                                        <TableCell align="right">{row?.unit}</TableCell>
+                                                        <TableCell align="right">
                                                             <TextField
                                                                 type="number"
-                                                                value={quantityChanges.find((item) => item.supplyId === row.id)?.quantity || 1}
+                                                                value={quantityChanges.find((item) => item.id === row.id)?.quantity || 1}
                                                                 inputProps={{ min: 1, max: 10 }}
                                                                 onChange={(e) => handleQuantityChange(row.id, +e.target.value)}
                                                             />

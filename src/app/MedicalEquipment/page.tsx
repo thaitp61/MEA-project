@@ -315,7 +315,6 @@ export default function EquipmentList() {
         setEquipmentID(equipmentID);
         setEquipmentName(equipmentName);
     };
-    console.log("select", selectedRows)
 
     return (
         <Container maxWidth={false}>
