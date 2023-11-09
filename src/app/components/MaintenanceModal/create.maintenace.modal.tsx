@@ -27,7 +27,7 @@ interface IProps {
     equipments: IEquipment[] | null;
     supply: Supply[];
 }
-interface Supply {
+export interface Supply {
     id: string,
     name: string,
     code: string,
@@ -191,6 +191,10 @@ export default function CreateMaintenace(props: IProps) {
     const [name, setName] = useState<string>("")
     // const [options, setOptions] = useState([]);
     // const [searchSupplyCalled, setSearchSupplyCalled] = useState(false);
+    const [maintenanceDetails, setMaintenanceDetails] = useState([]);
+
+
+
     useEffect(() => {
         if (equipments) {
             const ids = equipments.map((equipment) => equipment.id);
@@ -381,9 +385,6 @@ export default function CreateMaintenace(props: IProps) {
                         </FormControl>
                     </Grid>
                 </Grid>
-
-
-
                 {equipments?.map((row) => (
                     <div key={row.id}>
                         {/* Chi tiết bảo trì */}

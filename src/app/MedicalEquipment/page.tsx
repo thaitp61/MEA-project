@@ -22,7 +22,7 @@ import AddPlanMaintenanceButton from '../components/Toolbar/Buttons/AddButton';
 import "./layout.css"
 import Link from 'next/link';
 
-interface Equipments {
+export interface Equipments {
     id: string;
     name: string;
     code: string;
