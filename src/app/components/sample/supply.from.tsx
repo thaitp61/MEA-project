@@ -1,11 +1,11 @@
 'use client'
 import ApiContext from '@/app/context/ApiContext';
 import { MenuItem, Select, Stack, TextField } from '@mui/material';
-import SelectInput from '@mui/material/Select/SelectInput';
 import React, { useEffect, useState } from 'react'
 import { Controller, UseFormReturn, useForm } from "react-hook-form";
 import { Supply } from '../MaintenanceModal/create.maintenace.modal';
 import { IRepairReportItem } from './repair.report.item.form';
+import { IRepairReportForm } from './repair.report.form';
 
 
 export interface ISupplyForm {
@@ -17,12 +17,13 @@ export const defaultValues: ISupplyForm = {
     supplyId: ""
 }
 interface SupplyFormProps {
-    formMethods: UseFormReturn<IRepairReportItem, any, undefined>
+    formMethods: UseFormReturn<IRepairReportForm, any, undefined>
     index: number;
+    subIndex: number;
     equipmentId: string;
 }
 
-const SupplyForm: React.FC<SupplyFormProps> = ({ formMethods, index, equipmentId }) => {
+const SupplyForm: React.FC<SupplyFormProps> = ({ formMethods, index, equipmentId, subIndex }) => {
 
 
 
@@ -47,7 +48,7 @@ const SupplyForm: React.FC<SupplyFormProps> = ({ formMethods, index, equipmentId
                 <Stack spacing={2}>
 
                     <Controller
-                        name={`replaceItems.${index}.quantity`}
+                        name={`repairReportItems.${index}.replaceItems.${subIndex}.quantity`}
                         control={formMethods.control}
                         render={({ field }) => (
                             <TextField label="quantity" type='number' fullWidth {...field} />
@@ -55,7 +56,7 @@ const SupplyForm: React.FC<SupplyFormProps> = ({ formMethods, index, equipmentId
                     />
 
                     <Controller
-                        name={`replaceItems.${index}.supplyId`}
+                        name={`repairReportItems.${index}.replaceItems.${subIndex}.supplyId`}
                         control={formMethods.control}
                         render={({ field }) => (
                             <Select
@@ -73,11 +74,11 @@ const SupplyForm: React.FC<SupplyFormProps> = ({ formMethods, index, equipmentId
                     <button
                         onClick={() => {
 
-                            let replaceItems = formMethods.getValues("replaceItems");
+                            let replaceItems = formMethods.getValues(`repairReportItems.${index}.replaceItems`);
 
 
-                            replaceItems = replaceItems.filter((item, index2) => index2 !== index)
-                            formMethods.setValue("replaceItems", replaceItems);
+                            replaceItems = replaceItems.filter((item, index2) => index2 !== subIndex)
+                            formMethods.setValue(`repairReportItems.${index}.replaceItems`, replaceItems);
                         }}
                     >
                         Delete Item

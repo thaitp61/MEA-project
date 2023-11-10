@@ -1,18 +1,18 @@
 "use client"
 import React, { useEffect, useState } from 'react'
-import SupplyForm, { IRepairReportItem } from './repair.report.item.form';
+import RepairReportItemForm, { IRepairReportItem } from './repair.report.item.form';
 import { Controller, useForm } from 'react-hook-form';
 import { Equipments } from '@/app/MedicalEquipment/page';
 import ApiContext from '@/app/context/ApiContext';
 import { MenuItem, Select, Stack, TextField } from '@mui/material';
-import { defaultValues as replaceItemDefaultValues } from "./supply.from";
+import { defaultValues as repairReportItemDefaultValues } from "./repair.report.item.form";
 
 export interface IRepairReportForm {
     description: string,
     note: string,
     startAt: string,
     endAt: string,
-    IRepairReportItem: IRepairReportItem[]
+    repairReportItems: IRepairReportItem[]
 }
 
 const defaultValues: IRepairReportForm = {
@@ -20,33 +20,42 @@ const defaultValues: IRepairReportForm = {
     note: 'string',
     startAt: 'string',
     endAt: 'string',
-    IRepairReportItem: []
+    repairReportItems: []
 
 }
 
-interface RepairReportItemFormProps {
-
+interface RepairReportFormProps {
+    test: string[]
 }
 
-const RepairReportItemForm: React.FC<RepairReportItemFormProps> = () => {
-    const formMethods = useForm<IRepairReportItem>({ defaultValues });
-    const replaceItemWatch = formMethods.watch("replaceItems")
-    const equipmentId = formMethods.watch("equipmentId");
+const RepairReportForm: React.FC<RepairReportFormProps> = ({ test = ["6441bc51-9f89-43ba-87dd-a3b3f659bb47", "121ec482-a325-4e19-afd4-d607c65c28a7"] }) => {
+    const formMethods = useForm<IRepairReportForm>({ defaultValues });
+    const repairReportItemsWatch = formMethods.watch("repairReportItems")
+    // const equipmentId = formMethods.watch("equipmentId");
 
     const [equipments, setEquipments] = useState<Equipments[]>([]);
 
 
+    // useEffect(() => {
+    //     ApiContext.get("/equipment/select-options").then((res) => {
+    //         setEquipments(res.data);
+    //         if (res.data.length) {
+    //             formMethods.setValue("equipmentId", res.data[0].id);
+    //         }
+    //     });
+    // }, [])
+
     useEffect(() => {
-        ApiContext.get("/equipment/select-options").then((res) => {
-            setEquipments(res.data);
-            if (res.data.length) {
-                formMethods.setValue("equipmentId", res.data[0].id);
+        formMethods.setValue("repairReportItems", test.map(item => {
+            return {
+                ...repairReportItemDefaultValues,
+                equipmentId: item,
             }
-        });
+        }))
     }, [])
 
 
-    const onSubmit = (data: IRepairReportItem) => {
+    const onSubmit = (data: IRepairReportForm) => {
         console.log(data);
     };
 
@@ -63,34 +72,19 @@ const RepairReportItemForm: React.FC<RepairReportItemFormProps> = () => {
                         <TextField label="Description" fullWidth {...field} />
                     )}
                 />
-                <Controller
-                    name="equipmentId"
-                    control={formMethods.control}
-                    render={({ field }) => (
-                        <Select
-                            {...field}
-                            fullWidth
-                        >
-                            {equipments.map(item => {
-                                return <MenuItem value={item.id} key={item.id}>
-                                    {item.name}
-                                </MenuItem>
-                            })}
-                        </Select>
-                    )}
-                />
-                {replaceItemWatch.map((item, index) => {
-                    return <SupplyForm key={index} index={index} formMethods={formMethods} equipmentId={equipmentId} />
+
+                {repairReportItemsWatch.map((item, index) => {
+                    return <RepairReportItemForm key={index} index={index} formMethods={formMethods} />
                 })}
                 <div>
                     <button
                         onClick={() => {
-                            const replaceItems = formMethods.getValues("replaceItems");
-                            replaceItems.push(replaceItemDefaultValues)
-                            formMethods.setValue("replaceItems", replaceItems);
+                            const repairReportItems = formMethods.getValues("repairReportItems");
+                            repairReportItems.push(repairReportItemDefaultValues)
+                            formMethods.setValue("repairReportItems", repairReportItems);
                         }}
                     >
-                        Add More Supply Item
+                        Add More Equipment Fixing
                     </button>
                 </div>
                 <button type="submit">Submit</button>
@@ -100,4 +94,4 @@ const RepairReportItemForm: React.FC<RepairReportItemFormProps> = () => {
     </div>);
 }
 
-export default RepairReportItemForm;
+export default RepairReportForm;
